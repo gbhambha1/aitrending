@@ -1,35 +1,52 @@
 {
-  "_comment": "Starter set — edit freely. Only 'name' and 'handle' are required; 'channel_id' is filled in automatically by fetch_videos.py on the first run and cached here. To add a channel, append an entry with an empty channel_id. To drop one, delete its entry.",
+  "_comment": "Only 'name' and 'handle' are required; 'channel_id' is filled in automatically by fetch_videos.py on the first run and cached here. To add a channel, append an entry with an empty channel_id. To drop one, delete its entry. NOTE: the entries marked \"unverified\": true were starter suggestions added without network access to confirm the handle resolves — check the first run's resolution output and remove any that print FAILED.",
   "channels": [
+    {
+      "name": "Stanford Online",
+      "handle": "stanfordonline",
+      "channel_id": "",
+      "url": "https://www.youtube.com/@stanfordonline"
+    },
+    {
+      "name": "NVIDIA",
+      "handle": "nvidia",
+      "channel_id": "",
+      "url": "https://www.youtube.com/@nvidia"
+    },
     {
       "name": "Two Minute Papers",
       "handle": "TwoMinutePapers",
       "channel_id": "",
-      "url": "https://www.youtube.com/@TwoMinutePapers"
+      "url": "https://www.youtube.com/@TwoMinutePapers",
+      "unverified": true
     },
     {
       "name": "Yannic Kilcher",
       "handle": "YannicKilcher",
       "channel_id": "",
-      "url": "https://www.youtube.com/@YannicKilcher"
+      "url": "https://www.youtube.com/@YannicKilcher",
+      "unverified": true
     },
     {
       "name": "AI Explained",
       "handle": "aiexplained-official",
       "channel_id": "",
-      "url": "https://www.youtube.com/@aiexplained-official"
+      "url": "https://www.youtube.com/@aiexplained-official",
+      "unverified": true
     },
     {
       "name": "Andrej Karpathy",
       "handle": "AndrejKarpathy",
       "channel_id": "",
-      "url": "https://www.youtube.com/@AndrejKarpathy"
+      "url": "https://www.youtube.com/@AndrejKarpathy",
+      "unverified": true
     },
     {
       "name": "Fireship",
       "handle": "fireship",
       "channel_id": "",
-      "url": "https://www.youtube.com/@fireship"
+      "url": "https://www.youtube.com/@fireship",
+      "unverified": true
     }
   ],
   "videos_per_channel": 5

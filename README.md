@@ -87,10 +87,11 @@ Edit [`channels.json`](channels.json). **You only need the `@handle`** — leave
 `videos_per_channel` (default 5) caps how many recent videos are checked per channel per run.
 Videos already in `state.json` are skipped, so raising it is safe.
 
-> The channels currently listed are a **starter set that has not been verified** — they were added
-> without network access to confirm the handles resolve. Run the workflow once (or
-> `python fetch_videos.py` locally) and check the resolution output before trusting it; a bad handle
-> prints `FAILED` next to its name rather than failing silently.
+Entries marked `"unverified": true` were **starter suggestions**, added without network access to
+confirm the handle resolves — `@stanfordonline` and `@nvidia` are your own picks and carry no such
+marker. Run the workflow once (or `python fetch_videos.py` locally) and check the resolution output
+before trusting any of them: a bad handle prints `FAILED` next to its name rather than failing
+silently. Delete the ones you don't want.
 
 ## Running locally
 
