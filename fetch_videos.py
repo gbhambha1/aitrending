@@ -179,6 +179,32 @@ def preflight():
         print(f"  proxy OK with {label} username")
         return ""
 
+    # Both forms rejected. Before giving up, test one more cheap explanation:
+    # the two secrets being pasted into each other's box. Report it rather
+    # than silently adopting it -- a swap is a misconfiguration to fix, not a
+    # mode to run in.
+    user = (os.environ.get("WEBSHARE_PROXY_USERNAME") or "").strip()
+    password = (os.environ.get("WEBSHARE_PROXY_PASSWORD") or "").strip()
+    host = os.environ.get("WEBSHARE_PROXY_HOST", "p.webshare.io:80").strip()
+    if user and password:
+        swapped = f"http://{password}-rotate:{user}@{host}/"
+        try:
+            build_opener(ProxyHandler({"http": swapped, "https": swapped})).open(
+                Request(probe, headers={"User-Agent": UA}), timeout=30
+            )
+            authed = True
+        except HTTPError:
+            authed = True  # destination answered => auth succeeded
+        except Exception as e:
+            authed = "407" not in str(e)
+        if authed:
+            return (
+                "the credentials authenticate when SWAPPED — "
+                "WEBSHARE_PROXY_USERNAME holds the password and "
+                "WEBSHARE_PROXY_PASSWORD holds the username. Swap the two "
+                "secrets and re-run."
+            )
+
     return (
         f"both username forms were rejected with 407 ({last}). " + explain(last)
     )
@@ -190,13 +216,15 @@ def explain(exc):
     if "407" in text:
         return (
             "407 = the proxy REJECTED the credentials (it was reached, so the "
-            "host is right). Check, in order: (1) you bought Webshare's "
-            "rotating *Residential* plan -- a datacenter 'Proxy Server' plan "
-            "does not accept the '-rotate' username suffix and returns exactly "
-            "this; set WEBSHARE_ROTATE=0 if you are on a non-rotating plan. "
-            "(2) the secrets hold the generated *proxy* username/password from "
-            "Proxy -> Settings, not your Webshare account login. "
-            "(3) the plan still has bandwidth left."
+            "host is right). If BOTH username forms were tried, the suffix is "
+            "not the problem. Check, in order: (1) Webshare Proxy -> Settings, "
+            "'Authentication method' must be Username/Password -- if it is set "
+            "to IP Authorization, every username/password request 407s no "
+            "matter what. (2) the secrets hold the generated *proxy* "
+            "credentials from that same page, not your Webshare account login. "
+            "(3) the plan is activated and still has bandwidth. (4) on a "
+            "non-rotating plan set WEBSHARE_ROTATE=0, and for a datacenter "
+            "plan set WEBSHARE_PROXY_HOST to one of your IP:port endpoints."
         )
     if "403" in text:
         return "403 = the request was refused outright, which usually means an IP block rather than a credential problem."

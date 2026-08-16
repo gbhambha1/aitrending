@@ -71,16 +71,27 @@ You need a **residential IP**. `youtube-transcript-api` has built-in support for
 3. Add them as repo secrets: `WEBSHARE_PROXY_USERNAME` and `WEBSHARE_PROXY_PASSWORD`.
 
 **If the run fails with `407 Proxy Authentication Required`,** the proxy was reached and rejected
-your credentials. In order of likelihood:
+your credentials. The preflight tries both username forms automatically, so read its output first:
 
-1. **Wrong plan.** The rotating-residential endpoint expects the username with a `-rotate` suffix,
-   which `fetch_videos.py` appends automatically. A datacenter "Proxy Server" plan does *not* accept
-   it and answers exactly this 407. Either switch to the Residential plan, or set a repo **variable**
-   `WEBSHARE_ROTATE=0` (Settings → Secrets and variables → Actions → *Variables*) to send the bare
-   username.
-2. **Wrong credentials.** The secrets must hold the generated proxy username/password from
-   Webshare's Proxy → Settings page, not your account login.
-3. **Bandwidth exhausted** on the plan.
+- **Only `-rotate` was rejected** → you're on a non-rotating plan; it will have continued with the
+  bare username and you need do nothing.
+- **Both forms were rejected** → the username suffix is not the problem. Work through this list:
+
+1. **Authentication method.** On Webshare's Proxy → Settings there is an *Authentication method*
+   toggle. If it is set to **IP Authorization** rather than **Username/Password**, every
+   username/password request returns 407 no matter what you send. This is the most common cause of a
+   both-forms-rejected 407 on an otherwise correct Residential plan.
+2. **Wrong credentials.** The secrets must hold the generated proxy username/password from that same
+   Proxy → Settings page, not your Webshare account login. The preflight prints the credential
+   *shape* (lengths, and a warning if the username contains `@`) so you can check this without
+   exposing the secret.
+3. **Swapped secrets.** If the two values were pasted into each other's box, the preflight detects it
+   and says so explicitly.
+4. **Plan not activated, or bandwidth exhausted.**
+5. **Wrong endpoint for the plan.** `p.webshare.io:80` serves the rotating residential product only.
+   A datacenter "Proxy Server" plan uses individual `IP:port` endpoints from Proxy → Proxy List — set
+   `WEBSHARE_PROXY_HOST` to one. Note this only fixes the 407; a datacenter IP is then blocked by
+   YouTube anyway.
 
 The fetch step prints `Webshare proxy — user='...' host=...` at startup so you can see exactly which
 username form was sent. Override the endpoint with `WEBSHARE_PROXY_HOST` if your plan uses a
