@@ -19,7 +19,8 @@ from pathlib import Path
 # The account that owns the app password in GMAIL_APP_PASSWORD -- SMTP login
 # and the app password must belong to the SAME account or Gmail returns 535.
 # Overridable via env so the same script works locally and in CI.
-TO_ADDRESS = os.environ.get("EMAIL_TO", "gbhambha@intelliai.net")
+EXPECTED_ACCOUNT = "gbhambha@intelliai.net"
+TO_ADDRESS = os.environ.get("EMAIL_TO", EXPECTED_ACCOUNT)
 FROM_ADDRESS = os.environ.get("EMAIL_FROM", TO_ADDRESS)
 
 
@@ -56,6 +57,19 @@ def main():
             maintype="text",
             subtype="markdown",
             filename=attach_path.name,
+        )
+
+    # Log the identity before connecting. The app password belongs to exactly
+    # one Google account, and the commonest failure is it having been generated
+    # under a different one -- which surfaces only as an opaque 535. Printing
+    # the login address makes that visible in the run log at a glance.
+    print(f"SMTP login as: {FROM_ADDRESS}  ->  recipient: {TO_ADDRESS}")
+    if FROM_ADDRESS != EXPECTED_ACCOUNT:
+        print(
+            f"WARNING: sending as {FROM_ADDRESS}, not the configured account "
+            f"{EXPECTED_ACCOUNT} (EMAIL_FROM/EMAIL_TO is overriding it). The "
+            f"GMAIL_APP_PASSWORD must belong to {FROM_ADDRESS} or Gmail will "
+            f"reject the login with 535."
         )
 
     try:

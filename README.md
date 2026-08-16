@@ -100,12 +100,31 @@ Settings → Secrets and variables → Actions → **New repository secret**
 Secrets do **not** carry over from other repositories — even if the values are identical to
 `ytstock`'s, they must be added here separately.
 
-To create the Gmail app password: Google Account → Security → 2-Step Verification (must be on) →
-**App passwords** → generate one for "Mail". Paste it with the spaces removed. The SMTP login
-address and the app password must belong to the *same* Google account.
+### The Gmail app password
 
-Mail is sent from and to `gbhambha@intelliai.net`; override either with the `EMAIL_TO` / `EMAIL_FROM`
-environment variables.
+Mail is sent **from and to `gbhambha@intelliai.net`** — that address is the default for both in
+`send_email.py`, and SMTP logs in as it.
+
+> ⚠️ **Generate the app password while signed in as `gbhambha@intelliai.net`.** The SMTP login
+> address and the app password must belong to the *same* Google account. An app password created
+> under a different account fails with `535 BadCredentials` even though it is perfectly valid —
+> and being signed into several Google accounts at once is the usual way this goes wrong. Check the
+> account switcher before generating.
+
+1. Sign in as `gbhambha@intelliai.net`.
+2. Google Account → Security → **2-Step Verification** (must already be on).
+3. **App passwords** → generate one for "Mail".
+4. Paste it into the `GMAIL_APP_PASSWORD` secret **with the spaces removed** — it should be 16
+   lowercase letters, no digits.
+
+`intelliai.net` is a **Google Workspace** account, so app passwords additionally require that the
+Workspace admin has not disabled them.
+
+To send somewhere else, set the `EMAIL_TO` / `EMAIL_FROM` environment variables — but note that
+changing `EMAIL_FROM` means the app password must belong to *that* account instead.
+`send_email.py` prints `SMTP login as: <address>` before connecting and warns if it is sending as
+anything other than `gbhambha@intelliai.net`, so a mismatch shows up in the run log rather than as
+an opaque 535.
 
 ## Adding and removing channels
 
