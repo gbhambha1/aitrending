@@ -72,6 +72,57 @@ def load_json(path, default):
 # and preflight() settles it by trying both rather than making you guess.
 _ROTATE = None
 
+WEBSHARE_CONFIG_URL = "https://proxy.webshare.io/api/v2/proxy/config/"
+
+
+def load_credentials_from_api():
+    """Exchange a Webshare API key for the actual proxy username/password.
+
+    These are two entirely different credentials: the API key talks to
+    Webshare's REST API, while the proxy itself authenticates with a short
+    generated username/password pair. Sending an API key as the proxy username
+    is rejected with 407, which is indistinguishable from any other bad
+    credential -- so if WEBSHARE_API_KEY is set, fetch the real pair instead of
+    making the user find it by hand.
+
+    Populates the WEBSHARE_PROXY_* env vars in place. Returns an error string
+    on failure, or "" on success/not-applicable.
+    """
+    api_key = (os.environ.get("WEBSHARE_API_KEY") or "").strip()
+    if not api_key:
+        return ""
+    if os.environ.get("WEBSHARE_PROXY_USERNAME"):
+        print("  WEBSHARE_API_KEY set but explicit proxy credentials also "
+              "present — using the explicit ones")
+        return ""
+
+    req = Request(
+        WEBSHARE_CONFIG_URL,
+        headers={"Authorization": f"Token {api_key}", "User-Agent": UA},
+    )
+    try:
+        with urlopen(req, timeout=30) as r:
+            cfg = json.loads(r.read().decode("utf-8"))
+    except HTTPError as e:
+        if e.code in (401, 403):
+            return (f"Webshare rejected the API key ({e.code}). Check "
+                    f"WEBSHARE_API_KEY against Webshare -> API -> Keys.")
+        return f"Webshare API returned {e.code} fetching proxy config."
+    except Exception as e:
+        return f"could not reach the Webshare API ({type(e).__name__}: {e})."
+
+    user = str(cfg.get("username") or "").strip()
+    password = str(cfg.get("password") or "").strip()
+    if not user or not password:
+        return ("the Webshare API responded but carried no username/password "
+                "— check that a proxy plan is active on the account.")
+
+    os.environ["WEBSHARE_PROXY_USERNAME"] = user
+    os.environ["WEBSHARE_PROXY_PASSWORD"] = password
+    print(f"  fetched proxy credentials from the Webshare API "
+          f"(username {len(user)} chars)")
+    return ""
+
 
 def webshare_user(rotate=None):
     """The Webshare username, with the rotating-endpoint suffix if applicable.
@@ -125,6 +176,14 @@ def describe_credentials():
             "username contains '@' — that is an account email, NOT a Webshare "
             "proxy username. Copy the generated pair from Proxy → Settings."
         )
+    if len(user) > 20:
+        problems.append(
+            f"username is {len(user)} chars — Webshare proxy usernames are "
+            "short (~8-12). This looks like an API KEY, which is a different "
+            "credential and is always rejected by the proxy. Either set it as "
+            "WEBSHARE_API_KEY instead (the script will exchange it for the "
+            "real proxy credentials), or copy the pair from Proxy → Settings."
+        )
     if any(c.isupper() for c in user):
         problems.append("username has uppercase characters — Webshare proxy usernames are lowercase")
     if not user:
@@ -147,6 +206,12 @@ def preflight():
     the proxy is unusable, or "" if we are good to go.
     """
     global _ROTATE
+
+    # An API key, if supplied, is exchanged for real proxy credentials first.
+    problem = load_credentials_from_api()
+    if problem:
+        return problem
+
     if not os.environ.get("WEBSHARE_PROXY_USERNAME"):
         return ""  # direct or generic proxy -- nothing to probe
 

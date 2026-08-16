@@ -12,8 +12,10 @@
 # the two repos hold separate secrets and can use separate keys.
 #   ANTHROPIC_API_KEY_AI      Anthropic API key (sk-ant-api...)
 #   GMAIL_APP_PASSWORD        Gmail app password (16 chars)
-#   WEBSHARE_PROXY_USERNAME   Residential proxy user  \  without these two the
-#   WEBSHARE_PROXY_PASSWORD   Residential proxy pass  /  fetch step finds nothing
+#   WEBSHARE_PROXY_USERNAME   Residential proxy user  \  without proxy creds
+#   WEBSHARE_PROXY_PASSWORD   Residential proxy pass  /  the fetch finds nothing
+#   WEBSHARE_API_KEY          ...or supply this INSTEAD of the pair above; the
+#                             script exchanges it for the real credentials.
 
 name: ai-trends-pipeline
 
@@ -55,8 +57,9 @@ jobs:
       - name: Warn if no proxy is configured
         env:
           WEBSHARE_PROXY_USERNAME: ${{ secrets.WEBSHARE_PROXY_USERNAME }}
+          WEBSHARE_API_KEY: ${{ secrets.WEBSHARE_API_KEY }}
         run: |
-          if [ -z "$WEBSHARE_PROXY_USERNAME" ]; then
+          if [ -z "$WEBSHARE_PROXY_USERNAME" ] && [ -z "$WEBSHARE_API_KEY" ]; then
             echo "::warning::No WEBSHARE_PROXY_USERNAME secret — YouTube blocks GitHub runner IPs, so the fetch step will almost certainly return 0 videos."
           else
             echo "proxy credentials present"
@@ -67,6 +70,9 @@ jobs:
         env:
           WEBSHARE_PROXY_USERNAME: ${{ secrets.WEBSHARE_PROXY_USERNAME }}
           WEBSHARE_PROXY_PASSWORD: ${{ secrets.WEBSHARE_PROXY_PASSWORD }}
+          # Alternative to the pair above: a Webshare API key, which the
+          # script exchanges for the real proxy credentials at startup.
+          WEBSHARE_API_KEY: ${{ secrets.WEBSHARE_API_KEY }}
           # Set this repo variable to 0 if your Webshare plan is not the
           # rotating residential one (the "-rotate" suffix 407s on others).
           WEBSHARE_ROTATE: ${{ vars.WEBSHARE_ROTATE || '1' }}

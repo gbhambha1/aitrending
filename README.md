@@ -66,9 +66,18 @@ You need a **residential IP**. `youtube-transcript-api` has built-in support for
 > mistake and then wonder why nothing changed.
 
 1. Sign up at [webshare.io](https://www.webshare.io/) and buy a **Residential** plan.
-2. Go to the dashboard's **Proxy → Settings** page and copy the **proxy username and password**.
-   These are *not* your Webshare account login — they're a separate generated credential pair.
-3. Add them as repo secrets: `WEBSHARE_PROXY_USERNAME` and `WEBSHARE_PROXY_PASSWORD`.
+2. Get credentials — **either** works:
+   - **Proxy credentials (direct):** Webshare dashboard → **Proxy → Settings** → copy the generated
+     **proxy username and password**, and store them as `WEBSHARE_PROXY_USERNAME` /
+     `WEBSHARE_PROXY_PASSWORD`.
+   - **API key (simpler):** store your Webshare API key as `WEBSHARE_API_KEY` and the script
+     exchanges it for the real proxy credentials at startup. If both are set, the explicit pair wins.
+
+> ⚠️ **An API key is not a proxy password.** They are two different credentials: the API key talks to
+> Webshare's REST API, while the proxy authenticates with a short generated username/password pair.
+> Putting an API key in `WEBSHARE_PROXY_USERNAME` is rejected with `407` every time — set it as
+> `WEBSHARE_API_KEY` instead. The preflight warns if the username looks like a token (over 20
+> characters).
 
 **If the run fails with `407 Proxy Authentication Required`,** the proxy was reached and rejected
 your credentials. The preflight tries both username forms automatically, so read its output first:
@@ -120,8 +129,9 @@ Settings → Secrets and variables → Actions → **New repository secret**
 |---|---|---|
 | `ANTHROPIC_API_KEY_AI` | Yes | Anthropic API key (`sk-ant-api...`) — note the `_AI` suffix |
 | `GMAIL_APP_PASSWORD` | Yes | Gmail **app password** — 16 characters, *not* your normal password |
-| `WEBSHARE_PROXY_USERNAME` | Yes | Webshare **Residential** proxy username — see the IP section above |
-| `WEBSHARE_PROXY_PASSWORD` | Yes | Webshare Residential proxy password |
+| `WEBSHARE_PROXY_USERNAME` | Either this pair… | Webshare **Residential** proxy username (Proxy → Settings) |
+| `WEBSHARE_PROXY_PASSWORD` | …or the key below | Webshare Residential proxy password |
+| `WEBSHARE_API_KEY` | …or this alone | Webshare API key — exchanged for the proxy credentials at startup |
 
 Secrets do **not** carry over from other repositories — even if the values are identical to
 `ytstock`'s, they must be added here separately.
