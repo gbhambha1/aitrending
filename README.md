@@ -28,7 +28,7 @@ There is no DST gate and no fixed local time to hit — unlike the financial pip
 keys off a market close, so the exact minute doesn't matter and the schedule never needs a seasonal
 edit.
 
-## 🌐 The IP problem — test before you pay for a proxy
+## 🌐 The IP problem — why this repo uses a proxy
 
 YouTube aggressively blocks **datacenter IP ranges**, which includes every GitHub Actions runner.
 Two requests happen per video and only one is at risk:
@@ -42,25 +42,44 @@ The evidence that this bites is the sibling repo: `ytstock`'s fetch step reports
 on cloud runners, and its transcripts all arrived via manual commits instead. But the blocking is a
 heuristic, not a published rule, and it varies by IP range.
 
-**So test it first — it's free.** Run the workflow once with no proxy secrets set. `fetch_videos.py`
-connects directly, prints `DIRECT connection (no proxy configured)` at startup, and the run emits a
-loud warning if every request failed. One run tells you which situation you're in:
+Given that evidence, this repo is set up to use a residential proxy — see below.
 
-- **Transcripts came back** → you never needed a proxy. Ignore the rest of this section.
-- **0 videos, all errors** → confirmed blocked; set up a proxy below.
+If you ever want to check whether it's still needed, running with no proxy secrets set costs
+nothing: `fetch_videos.py` falls back to a direct connection, prints
+`DIRECT connection (no proxy configured)` at startup, and the run emits a loud warning if every
+request failed.
 
-### If you do need one
+### Setting up the proxy
 
-You need a **residential IP**, not Webshare specifically. `youtube-transcript-api` has built-in
-support for Webshare (~$1–3/month), which is why it's the documented path:
+You need a **residential IP**. `youtube-transcript-api` has built-in support for Webshare
+(~$1–3/month), which is why it's the documented path.
 
-1. Sign up at [webshare.io](https://www.webshare.io/) and buy a **residential** proxy plan.
-2. Copy the **proxy username and password** (not your account login).
-3. Add them as repo secrets — `WEBSHARE_PROXY_USERNAME` and `WEBSHARE_PROXY_PASSWORD`.
+> ⚠️ **Buy the right plan.** Webshare sells several proxy types and only one works here:
+>
+> | Plan | Works? |
+> |---|---|
+> | **Residential** (rotating) | ✅ **Buy this one** |
+> | "Proxy Server" (datacenter) | ❌ Datacenter IPs — blocked exactly like the GitHub runner |
+> | "Static Residential" | ❌ Fixed IP, gets flagged quickly under repeated use |
+>
+> The datacenter plan is the cheapest and most prominent on their site, so it is easy to buy by
+> mistake and then wonder why nothing changed.
+
+1. Sign up at [webshare.io](https://www.webshare.io/) and buy a **Residential** plan.
+2. Go to the dashboard's **Proxy → Settings** page and copy the **proxy username and password**.
+   These are *not* your Webshare account login — they're a separate generated credential pair.
+3. Add them as repo secrets: `WEBSHARE_PROXY_USERNAME` and `WEBSHARE_PROXY_PASSWORD`.
+
+That's it — `fetch_videos.py` detects them, appends the `-rotate` suffix that asks for a fresh exit
+IP per request, and routes both the feed and transcript requests through the proxy. It prints
+`Webshare residential proxy` at startup so you can confirm it's active.
+
+**Bandwidth:** residential plans bill per GB. This pipeline is light — 7 channels × 5 videos checked
+per day, with everything already in `state.json` skipped, so only genuinely new videos transfer.
+Expect well under 1 GB/month, i.e. the smallest plan.
 
 Any other provider (Bright Data, IPRoyal, Oxylabs, Smartproxy) works too — set `YT_PROXY_URL` to its
-proxy URL instead. `fetch_videos.py` routes both the feed and the transcript requests through
-whichever is configured.
+proxy URL instead. `fetch_videos.py` routes everything through whichever is configured.
 
 **What won't work:** the official YouTube Data API v3 is unblocked but only downloads captions for
 videos *you own*, so it can't help here; a cheap VPS is another datacenter IP; free proxy lists are
@@ -75,8 +94,8 @@ Settings → Secrets and variables → Actions → **New repository secret**
 |---|---|---|
 | `ANTHROPIC_API_KEY` | Yes | Anthropic API key (`sk-ant-api...`) |
 | `GMAIL_APP_PASSWORD` | Yes | Gmail **app password** — 16 characters, *not* your normal password |
-| `WEBSHARE_PROXY_USERNAME` | Only if blocked | Residential proxy username — see the IP section above; test without it first |
-| `WEBSHARE_PROXY_PASSWORD` | Only if blocked | Residential proxy password |
+| `WEBSHARE_PROXY_USERNAME` | Yes | Webshare **Residential** proxy username — see the IP section above |
+| `WEBSHARE_PROXY_PASSWORD` | Yes | Webshare Residential proxy password |
 
 Secrets do **not** carry over from other repositories — even if the values are identical to
 `ytstock`'s, they must be added here separately.
