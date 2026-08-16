@@ -86,9 +86,8 @@ The fetch step prints `Webshare proxy — user='...' host=...` at startup so you
 username form was sent. Override the endpoint with `WEBSHARE_PROXY_HOST` if your plan uses a
 different one.
 
-That's it — `fetch_videos.py` detects them, appends the `-rotate` suffix that asks for a fresh exit
-IP per request, and routes both the feed and transcript requests through the proxy. It prints
-`Webshare residential proxy` at startup so you can confirm it's active.
+`fetch_videos.py` picks the secrets up automatically and routes both the feed and the transcript
+requests through the proxy.
 
 **Bandwidth:** residential plans bill per GB. This pipeline is light — 7 channels × 5 videos checked
 per day, with everything already in `state.json` skipped, so only genuinely new videos transfer.
