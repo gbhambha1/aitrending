@@ -67,16 +67,54 @@ def load_json(path, default):
 # Proxy plumbing
 # --------------------------------------------------------------------------
 
+def webshare_user():
+    """The Webshare username, with the rotating-endpoint suffix if applicable.
+
+    The "-rotate" suffix asks for a different exit IP per request and is what
+    Webshare's *rotating residential* endpoint expects. It is NOT valid on
+    other plan types -- sending it with a datacenter ("Proxy Server") account
+    is rejected with 407. Set WEBSHARE_ROTATE=0 to send the bare username.
+    """
+    user = (os.environ.get("WEBSHARE_PROXY_USERNAME") or "").strip()
+    if not user:
+        return ""
+    if os.environ.get("WEBSHARE_ROTATE", "1").strip() in ("0", "false", "no"):
+        return user
+    # Don't double-append if the credential already carries the suffix.
+    return user if user.endswith("-rotate") else f"{user}-rotate"
+
+
 def proxy_url():
     """The proxy URL for plain urllib calls, or '' for a direct connection."""
-    user = os.environ.get("WEBSHARE_PROXY_USERNAME")
-    password = os.environ.get("WEBSHARE_PROXY_PASSWORD")
+    user = webshare_user()
+    # .strip() matters: a secret pasted with a trailing newline authenticates
+    # as a different user and comes back as an opaque 407.
+    password = (os.environ.get("WEBSHARE_PROXY_PASSWORD") or "").strip()
     if user and password:
-        # Webshare's rotating residential endpoint. The "-rotate" suffix asks
-        # for a different exit IP per request, which is what keeps YouTube from
-        # rate-limiting the whole run after a few videos.
-        return f"http://{user}-rotate:{password}@p.webshare.io:80/"
-    return os.environ.get("YT_PROXY_URL", "")
+        host = os.environ.get("WEBSHARE_PROXY_HOST", "p.webshare.io:80").strip()
+        return f"http://{user}:{password}@{host}/"
+    return os.environ.get("YT_PROXY_URL", "").strip()
+
+
+def explain(exc):
+    """Turn an opaque tunnel error into something actionable."""
+    text = str(exc)
+    if "407" in text:
+        return (
+            "407 = the proxy REJECTED the credentials (it was reached, so the "
+            "host is right). Check, in order: (1) you bought Webshare's "
+            "rotating *Residential* plan -- a datacenter 'Proxy Server' plan "
+            "does not accept the '-rotate' username suffix and returns exactly "
+            "this; set WEBSHARE_ROTATE=0 if you are on a non-rotating plan. "
+            "(2) the secrets hold the generated *proxy* username/password from "
+            "Proxy -> Settings, not your Webshare account login. "
+            "(3) the plan still has bandwidth left."
+        )
+    if "403" in text:
+        return "403 = the request was refused outright, which usually means an IP block rather than a credential problem."
+    if "Name or service not known" in text or "getaddrinfo" in text:
+        return "DNS failure -- check WEBSHARE_PROXY_HOST."
+    return ""
 
 
 def opener():
@@ -89,8 +127,8 @@ def opener():
 
 def transcript_api():
     """A YouTubeTranscriptApi configured with the proxy, if one is set."""
-    user = os.environ.get("WEBSHARE_PROXY_USERNAME")
-    password = os.environ.get("WEBSHARE_PROXY_PASSWORD")
+    user = (os.environ.get("WEBSHARE_PROXY_USERNAME") or "").strip()
+    password = (os.environ.get("WEBSHARE_PROXY_PASSWORD") or "").strip()
     if user and password and WebshareProxyConfig is not None:
         return YouTubeTranscriptApi(
             proxy_config=WebshareProxyConfig(
@@ -107,7 +145,12 @@ def transcript_api():
 
 def describe_proxy():
     if os.environ.get("WEBSHARE_PROXY_USERNAME"):
-        return "Webshare residential proxy"
+        user = webshare_user()
+        host = os.environ.get("WEBSHARE_PROXY_HOST", "p.webshare.io:80").strip()
+        # Show the username shape (never the password) -- the commonest 407
+        # cause is the "-rotate" suffix being wrong for the plan, and you
+        # cannot diagnose that without seeing which form was sent.
+        return f"Webshare proxy — user='{user}' host={host}"
     if os.environ.get("YT_PROXY_URL"):
         return "generic proxy (YT_PROXY_URL)"
     return "DIRECT connection (no proxy configured)"
@@ -161,6 +204,10 @@ def ensure_channel_ids(config):
             changed = True
         except Exception as e:
             print(f"FAILED ({type(e).__name__}: {e})")
+            if failures == 0:  # explain once, on the first failure only
+                hint = explain(e)
+                if hint:
+                    print(f"    -> {hint}")
             failures += 1
     if changed:
         CHANNELS_FILE.write_text(
@@ -283,20 +330,29 @@ def main():
 
     print(f"\nDone. {len(new_files)} new transcript(s).")
 
-    # Say the quiet part out loud: a run that fetched nothing AND hit errors
-    # with no proxy configured is almost certainly an IP block, not a quiet
-    # week on YouTube. Silence here is what let ytstock look healthy for weeks.
-    if blocked and not new_files and not proxy_url():
-        print(
-            "\n::warning::Every request failed and no proxy is configured. "
-            "YouTube blocks datacenter IPs, so this is the expected result on a "
-            "cloud runner. Set WEBSHARE_PROXY_USERNAME / WEBSHARE_PROXY_PASSWORD."
-        )
-
     if new_files:
         print("NEW_TRANSCRIPTS:")
         for f in new_files:
             print(f"  {f}")
+
+    # A totally failed fetch and a genuinely quiet day both end in
+    # "0 new transcript(s)" -- and reporting the first as success is exactly
+    # how a broken pipeline stays green for weeks. If EVERY channel failed on
+    # connectivity, that is an infrastructure error: exit non-zero so the run
+    # fails loudly and the failure-alert email fires.
+    total = len(config["channels"])
+    if blocked >= total and not new_files:
+        print(
+            f"\n::error::All {total} channels failed to connect — this run "
+            f"reached nothing, so it is NOT evidence of a quiet day."
+        )
+        if not proxy_url():
+            print(
+                "::error::No proxy is configured. YouTube blocks datacenter "
+                "IPs, so this is the expected result on a cloud runner. Set "
+                "WEBSHARE_PROXY_USERNAME / WEBSHARE_PROXY_PASSWORD."
+            )
+        sys.exit(3)
 
 
 if __name__ == "__main__":

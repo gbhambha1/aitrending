@@ -67,7 +67,14 @@ jobs:
         env:
           WEBSHARE_PROXY_USERNAME: ${{ secrets.WEBSHARE_PROXY_USERNAME }}
           WEBSHARE_PROXY_PASSWORD: ${{ secrets.WEBSHARE_PROXY_PASSWORD }}
+          # Set this repo variable to 0 if your Webshare plan is not the
+          # rotating residential one (the "-rotate" suffix 407s on others).
+          WEBSHARE_ROTATE: ${{ vars.WEBSHARE_ROTATE || '1' }}
         run: |
+          # pipefail is essential: without it the exit status of the pipeline
+          # is tee's, so a failing fetch_videos.py is silently reported as
+          # success and the run goes green having ingested nothing.
+          set -o pipefail
           python fetch_videos.py | tee fetch_output.txt
           if grep -q "NEW_TRANSCRIPTS:" fetch_output.txt; then
             echo "has_new=true" >> "$GITHUB_OUTPUT"

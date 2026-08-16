@@ -70,6 +70,22 @@ You need a **residential IP**. `youtube-transcript-api` has built-in support for
    These are *not* your Webshare account login — they're a separate generated credential pair.
 3. Add them as repo secrets: `WEBSHARE_PROXY_USERNAME` and `WEBSHARE_PROXY_PASSWORD`.
 
+**If the run fails with `407 Proxy Authentication Required`,** the proxy was reached and rejected
+your credentials. In order of likelihood:
+
+1. **Wrong plan.** The rotating-residential endpoint expects the username with a `-rotate` suffix,
+   which `fetch_videos.py` appends automatically. A datacenter "Proxy Server" plan does *not* accept
+   it and answers exactly this 407. Either switch to the Residential plan, or set a repo **variable**
+   `WEBSHARE_ROTATE=0` (Settings → Secrets and variables → Actions → *Variables*) to send the bare
+   username.
+2. **Wrong credentials.** The secrets must hold the generated proxy username/password from
+   Webshare's Proxy → Settings page, not your account login.
+3. **Bandwidth exhausted** on the plan.
+
+The fetch step prints `Webshare proxy — user='...' host=...` at startup so you can see exactly which
+username form was sent. Override the endpoint with `WEBSHARE_PROXY_HOST` if your plan uses a
+different one.
+
 That's it — `fetch_videos.py` detects them, appends the `-rotate` suffix that asks for a fresh exit
 IP per request, and routes both the feed and transcript requests through the proxy. It prints
 `Webshare residential proxy` at startup so you can confirm it's active.
