@@ -1,0 +1,36 @@
+{
+  "_comment": "Starter set — edit freely. Only 'name' and 'handle' are required; 'channel_id' is filled in automatically by fetch_videos.py on the first run and cached here. To add a channel, append an entry with an empty channel_id. To drop one, delete its entry.",
+  "channels": [
+    {
+      "name": "Two Minute Papers",
+      "handle": "TwoMinutePapers",
+      "channel_id": "",
+      "url": "https://www.youtube.com/@TwoMinutePapers"
+    },
+    {
+      "name": "Yannic Kilcher",
+      "handle": "YannicKilcher",
+      "channel_id": "",
+      "url": "https://www.youtube.com/@YannicKilcher"
+    },
+    {
+      "name": "AI Explained",
+      "handle": "aiexplained-official",
+      "channel_id": "",
+      "url": "https://www.youtube.com/@aiexplained-official"
+    },
+    {
+      "name": "Andrej Karpathy",
+      "handle": "AndrejKarpathy",
+      "channel_id": "",
+      "url": "https://www.youtube.com/@AndrejKarpathy"
+    },
+    {
+      "name": "Fireship",
+      "handle": "fireship",
+      "channel_id": "",
+      "url": "https://www.youtube.com/@fireship"
+    }
+  ],
+  "videos_per_channel": 5
+}

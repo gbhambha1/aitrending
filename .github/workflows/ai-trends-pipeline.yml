@@ -1,0 +1,246 @@
+# Daily YouTube → AI-TRENDS.md pipeline, running fully on GitHub's servers.
+# Nothing of yours needs to be powered on.
+#
+# Schedule: 13:00 UTC daily (~9am ET in summer, ~8am ET in winter).
+#
+# Unlike the financial pipeline this was forked from, there is no market close
+# to hit, so there is no DST gate job — the exact minute does not matter and
+# the schedule never needs a seasonal edit.
+#
+# Required repo secrets:
+#   ANTHROPIC_API_KEY         Anthropic API key (sk-ant-api...)
+#   GMAIL_APP_PASSWORD        Gmail app password (16 chars)
+#   WEBSHARE_PROXY_USERNAME   Residential proxy user  \  without these two the
+#   WEBSHARE_PROXY_PASSWORD   Residential proxy pass  /  fetch step finds nothing
+
+name: ai-trends-pipeline
+
+on:
+  schedule:
+    - cron: "0 13 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  id-token: write
+  actions: read
+
+concurrency:
+  group: ai-trends-pipeline
+  cancel-in-progress: false
+
+jobs:
+  pipeline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Record starting commit
+        id: base
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # YouTube blocks datacenter IPs, so this step fetches nothing without a
+      # proxy. Warn loudly rather than letting the run look healthy while
+      # silently ingesting zero videos.
+      - name: Warn if no proxy is configured
+        env:
+          WEBSHARE_PROXY_USERNAME: ${{ secrets.WEBSHARE_PROXY_USERNAME }}
+        run: |
+          if [ -z "$WEBSHARE_PROXY_USERNAME" ]; then
+            echo "::warning::No WEBSHARE_PROXY_USERNAME secret — YouTube blocks GitHub runner IPs, so the fetch step will almost certainly return 0 videos."
+          else
+            echo "proxy credentials present"
+          fi
+
+      - name: Fetch new transcripts
+        id: fetch
+        env:
+          WEBSHARE_PROXY_USERNAME: ${{ secrets.WEBSHARE_PROXY_USERNAME }}
+          WEBSHARE_PROXY_PASSWORD: ${{ secrets.WEBSHARE_PROXY_PASSWORD }}
+        run: |
+          python fetch_videos.py | tee fetch_output.txt
+          if grep -q "NEW_TRANSCRIPTS:" fetch_output.txt; then
+            echo "has_new=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_new=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check API key secret shape (safe - prefix and length only)
+        env:
+          TOKEN: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "::error::ANTHROPIC_API_KEY secret is EMPTY or missing — check the secret name under Settings > Secrets and variables > Actions"
+            exit 1
+          fi
+          echo "key length: ${#TOKEN}"
+          echo "key prefix: ${TOKEN:0:11}"
+          case "$TOKEN" in
+            sk-ant-api*) echo "prefix looks like an Anthropic API key (expected)" ;;
+            sk-ant-oat*) echo "::error::This looks like a Claude Code OAUTH token, not an API key. Store it as CLAUDE_CODE_OAUTH_TOKEN and switch the workflow input back."; exit 1 ;;
+            *) echo "::warning::Unexpected key prefix — expected sk-ant-api..." ;;
+          esac
+
+      - name: Summarize new videos (Claude)
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          show_full_output: true
+          # Alternative (bill a Claude Pro/Max subscription instead):
+          # claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}  # from `claude setup-token`
+          claude_args: '--max-turns 60 --allowedTools "Bash,Read,Edit,Write,Glob,Grep"'
+          prompt: |
+            You are running the AI-trends pipeline for this repo.
+            `python fetch_videos.py` has already run; its output is in
+            ./fetch_output.txt and any new transcripts are in transcripts/.
+
+            These are TECHNICAL channels (AI research, model releases, developer
+            tooling). This repo is deliberately separate from the user's
+            financial pipeline — do not add market commentary, tickers, price
+            levels, or investment framing of any kind.
+
+            1. Read ./fetch_output.txt. Then ALSO compare the files in
+               transcripts/ against the Coverage Log table in AI-TRENDS.md —
+               any transcript file not yet in the log counts as new. If there
+               are no new transcripts, make NO changes and stop; a quiet day is
+               a valid outcome and an empty diff is the correct result.
+
+            2. For EACH new transcript, read it and add an entry to
+               AI-TRENDS.md under a `## 📺 <Channel Name>` section (create the
+               section if it does not exist; newest entries first). Use a level-3
+               `### ` heading with the video title and date — the digest builder
+               detects new entries by looking for added `### ` lines, so this
+               level matters. Each entry gets:
+                 - the video link
+                 - what was actually claimed or demonstrated, in specifics
+                   (model names, versions, benchmark numbers, techniques, costs)
+                 - a "Caveats" line flagging sponsorships, affiliate links,
+                   comment-for-link funnels, unreproduced benchmark claims, and
+                   anything stated as fact that is really a prediction
+
+            3. Rewrite the "Latest themes" section so it reflects the new
+               material. This section is what gets emailed, so it must stand on
+               its own: what changed in AI, and why it matters. Not a list of
+               video titles. Where channels disagree, say so — put that in
+               "Cross-Channel Synthesis".
+
+            4. Add one Coverage Log row per video, and update the "Videos
+               covered" count and "Last updated" date in the header.
+
+            5. Commit AI-TRENDS.md, state.json, channels.json (fetch_videos.py
+               may have cached newly resolved channel IDs there) and any new
+               transcripts/ files with a concise message, then push to the
+               branch this run was launched from —
+               `git push origin HEAD:${{ github.ref_name }}`. Configure git
+               identity first: `git config user.name "ai-trends-pipeline[bot]"`
+               and `git config user.email "actions@users.noreply.github.com"`.
+
+            Attribute claims to the speaker rather than asserting them. YouTube
+            technical content is frequently promotional — a channel demoing its
+            own product is not a neutral source, and should be labelled.
+            Only modify AI-TRENDS.md, state.json, channels.json, and transcripts/.
+
+      - name: Publish Claude result to run summary
+        if: always()
+        run: |
+          F=/home/runner/work/_temp/claude-execution-output.json
+          if [ -f "$F" ]; then
+            python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          try:
+              data = json.load(open('/home/runner/work/_temp/claude-execution-output.json'))
+              print("## Claude output\n")
+              print("```")
+              print(json.dumps(data, indent=2)[:4000])
+              print("```")
+          except Exception as e:
+              print(f"could not parse Claude output: {e}")
+          PY
+          else
+            echo "no execution output file found" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Fallback commit if Claude left changes uncommitted
+        if: always()
+        run: |
+          git config user.name "ai-trends-pipeline[bot]"
+          git config user.email "actions@users.noreply.github.com"
+          echo "## Git state after Claude" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          git status --short | tee -a "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          TARGET="${{ github.ref_name }}"
+          BASE="${{ steps.base.outputs.sha }}"
+          if [ -n "$(git log --oneline "$BASE"..HEAD)" ]; then
+            git push origin "HEAD:$TARGET" && echo "pushed Claude's unpushed commits to $TARGET" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          if [ -n "$(git status --porcelain -- AI-TRENDS.md state.json channels.json transcripts/)" ]; then
+            git add AI-TRENDS.md state.json channels.json transcripts/
+            git commit -m "Pipeline: automated AI-trends update (fallback commit)"
+            git push origin "HEAD:$TARGET"
+            echo "fallback commit pushed to $TARGET" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      # ---- Email the result -------------------------------------------------
+      # build_digest.py exits 2 when nothing new landed. There is no daily
+      # market data here to justify a "nothing happened" email, so that case
+      # skips the send entirely rather than training you to ignore the inbox.
+      - name: Email the digest
+        if: success()
+        env:
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+        run: |
+          if [ -z "$GMAIL_APP_PASSWORD" ]; then
+            echo "::error::GMAIL_APP_PASSWORD secret is missing — no email can be sent. Add it under Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+          set +e
+          SUBJECT=$(python build_digest.py "${{ steps.base.outputs.sha }}")
+          RC=$?
+          set -e
+          if [ "$RC" -eq 2 ]; then
+            echo "No new videos this run — skipping the email."
+            echo "## Email" >> "$GITHUB_STEP_SUMMARY"
+            echo "Skipped — nothing new this run." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          if [ "$RC" -ne 0 ]; then
+            echo "::error::build_digest.py failed with exit code $RC"
+            exit 1
+          fi
+          python send_email.py "$SUBJECT" digest.txt --html digest.html --attach AI-TRENDS.md
+          echo "## Email" >> "$GITHUB_STEP_SUMMARY"
+          echo "Sent: $SUBJECT" >> "$GITHUB_STEP_SUMMARY"
+
+      # A silent failure is how a pipeline goes unnoticed for weeks — so
+      # failures get their own email.
+      - name: Email a failure alert
+        if: failure()
+        env:
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+        run: |
+          if [ -z "$GMAIL_APP_PASSWORD" ]; then
+            echo "no GMAIL_APP_PASSWORD — cannot send failure alert"
+            exit 0
+          fi
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          cat > alert.txt <<EOF
+          The aitrending pipeline FAILED on $(date -u '+%Y-%m-%d %H:%M UTC').
+
+          No AI-trends update was produced for this run.
+
+          Run log: $RUN_URL
+
+          Common causes: expired ANTHROPIC_API_KEY, Anthropic credit exhausted,
+          expired or exhausted proxy credentials, or YouTube blocking the
+          runner IP during the fetch step.
+          EOF
+          python send_email.py "⚠️ aitrending pipeline FAILED" alert.txt || true

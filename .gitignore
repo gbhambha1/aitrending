@@ -1,0 +1,14 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Pipeline run artifacts (regenerated every run)
+digest.txt
+digest.html
+alert.txt
+fetch_output.txt
+
+# Local environment
+.env
+.venv/
+venv/
