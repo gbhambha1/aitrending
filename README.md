@@ -15,8 +15,8 @@ from the Actions tab (**Run workflow**).
 
 Each run:
 
-1. `fetch_videos.py` — resolves channel IDs, pulls new transcripts from the tracked channels
-   (`channels.json`).
+1. `fetch_videos.py` — resolves channel IDs, then for each tracked channel takes the **5 most-viewed
+   videos published in the last 30 days** and pulls any transcripts it doesn't already have.
 2. **Claude** — summarizes any new videos into `AI-TRENDS.md` and rewrites the **Latest themes**
    section.
 3. Commits and pushes `AI-TRENDS.md`, `state.json`, `channels.json` and new transcripts.
@@ -180,8 +180,26 @@ Edit [`channels.json`](channels.json). **You only need the `@handle`** — leave
 }
 ```
 
-`videos_per_channel` (default 5) caps how many recent videos are checked per channel per run.
-Videos already in `state.json` are skipped, so raising it is safe.
+**How videos are selected.** Each run reads the channel's RSS feed, drops anything published more
+than `max_age_days` ago (default **30**), ranks what remains by view count, and takes the top
+`videos_per_channel` (default **5**). Videos already in `state.json` are skipped, so only genuinely
+new ones are downloaded.
+
+View counts come from the feed itself (`media:statistics`), so no API key is needed. The feed only
+lists a channel's recent uploads, which means this is "most popular among recent uploads" rather
+than an all-time ranking — exactly what you want for a trends digest.
+
+Both knobs live in `channels.json`:
+
+```json
+"videos_per_channel": 5,
+"max_age_days": 30
+```
+
+Raising either lengthens the run. Three repo **variables** bound it: `FETCH_DELAY_SECONDS`
+(default 4), `RATE_LIMIT_GIVE_UP` (default 4 rate-limit hits before stopping), and
+`MAX_RUNTIME_SECONDS` (default 900). The fetch stops cleanly at any of those limits with progress
+saved, and the next run resumes — it never gets killed mid-write by the job timeout.
 
 Entries marked `"unverified": true` were **starter suggestions**, added without network access to
 confirm the handle resolves — `@stanfordonline` and `@nvidia` are your own picks and carry no such

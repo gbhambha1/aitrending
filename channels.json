@@ -1,5 +1,5 @@
 {
-  "_comment": "Only 'name' and 'handle' are required; 'channel_id' is filled in automatically by fetch_videos.py on the first run and cached here. To add a channel, append an entry with an empty channel_id. To drop one, delete its entry. NOTE: the entries marked \"unverified\": true were starter suggestions added without network access to confirm the handle resolves — check the first run's resolution output and remove any that print FAILED.",
+  "_comment": "Only 'name' and 'handle' are required; 'channel_id' is filled in automatically by fetch_videos.py on the first run and cached here. To add a channel, append an entry with an empty channel_id. To drop one, delete its entry. Each run takes the 'videos_per_channel' MOST-VIEWED videos published within the last 'max_age_days' days. NOTE: entries marked \"unverified\": true were starter suggestions added without network access to confirm the handle resolves \u2014 check the first run's resolution output and remove any that print FAILED.",
   "channels": [
     {
       "name": "Stanford Online",
@@ -49,5 +49,6 @@
       "unverified": true
     }
   ],
-  "videos_per_channel": 5
+  "videos_per_channel": 5,
+  "max_age_days": 30
 }

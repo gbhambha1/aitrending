@@ -79,6 +79,9 @@ jobs:
           # Raise these repo variables if YouTube keeps rate-limiting the run.
           FETCH_DELAY_SECONDS: ${{ vars.FETCH_DELAY_SECONDS || '4' }}
           RATE_LIMIT_GIVE_UP: ${{ vars.RATE_LIMIT_GIVE_UP || '4' }}
+          # Hard ceiling on the fetch, well under the 30-minute job timeout so
+          # the summarize and commit steps always still get to run.
+          MAX_RUNTIME_SECONDS: ${{ vars.MAX_RUNTIME_SECONDS || '900' }}
         run: |
           # pipefail is essential: without it the exit status of the pipeline
           # is tee's, so a failing fetch_videos.py is silently reported as

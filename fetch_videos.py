@@ -28,6 +28,7 @@ import sys
 import time
 import xml.etree.ElementTree as ET
 from pathlib import Path
+from datetime import date, timedelta
 from urllib.error import HTTPError, URLError
 from urllib.request import urlopen, Request, ProxyHandler, build_opener
 
@@ -50,6 +51,7 @@ TRANSCRIPTS_DIR = BASE / "transcripts"
 
 ATOM = "{http://www.w3.org/2005/Atom}"
 YT = "{http://www.youtube.com/xml/schemas/2015}"
+MEDIA = "{http://search.yahoo.com/mrss/}"
 
 # Be gentle with YouTube. This applies after EVERY attempt, successful or not:
 # skipping it on failures turns a bad patch into a retry storm, which is what
@@ -60,6 +62,12 @@ FETCH_DELAY_SECONDS = float(os.environ.get("FETCH_DELAY_SECONDS", "4"))
 # after every success, so stopping early costs nothing -- the next run picks
 # up where this one left off, and backing off beats digging the hole deeper.
 RATE_LIMIT_GIVE_UP = int(os.environ.get("RATE_LIMIT_GIVE_UP", "4"))
+
+# Hard ceiling on the whole fetch. Backoffs and per-video delays can otherwise
+# stretch a run toward the job timeout, which would kill it mid-write and lose
+# the summarize/commit steps entirely. Stopping ourselves keeps the run useful:
+# whatever was fetched still gets summarized, and the rest waits for tomorrow.
+MAX_RUNTIME_SECONDS = float(os.environ.get("MAX_RUNTIME_SECONDS", "900"))
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
 
 # A channel ID is always "UC" + 22 chars from the URL-safe base64 alphabet.
@@ -426,15 +434,46 @@ def fetch_feed(channel_id):
         return ET.fromstring(r.read())
 
 
-def feed_videos(root, limit):
-    videos = []
-    for entry in root.findall(f"{ATOM}entry")[:limit]:
+def feed_videos(root, limit, max_age_days):
+    """The `limit` most-viewed videos published within `max_age_days`.
+
+    The feed carries a view count per entry (media:community/media:statistics),
+    so popularity can be ranked without the Data API. Note the feed only lists
+    a channel's most recent uploads, so this is "most popular among recent
+    uploads", not an all-time ranking.
+    """
+    cutoff = date.today() - timedelta(days=max_age_days)
+    videos, too_old = [], 0
+
+    for entry in root.findall(f"{ATOM}entry"):
+        published = entry.find(f"{ATOM}published").text[:10]
+        try:
+            if date.fromisoformat(published) < cutoff:
+                too_old += 1
+                continue
+        except ValueError:
+            pass  # unparseable date -- keep it rather than silently dropping
+
+        stats = entry.find(f"{MEDIA}group/{MEDIA}community/{MEDIA}statistics")
+        views = 0
+        if stats is not None and stats.get("views"):
+            try:
+                views = int(stats.get("views"))
+            except ValueError:
+                views = 0
+
         videos.append({
             "video_id": entry.find(f"{YT}videoId").text,
             "title": entry.find(f"{ATOM}title").text,
-            "published": entry.find(f"{ATOM}published").text[:10],
+            "published": published,
+            "views": views,
         })
-    return videos
+
+    videos.sort(key=lambda v: v["views"], reverse=True)
+    selected = videos[:limit]
+    print(f"  {len(videos)} video(s) within {max_age_days} days "
+          f"({too_old} older, skipped) — taking the top {len(selected)} by views")
+    return selected
 
 
 def safe_name(text):
@@ -509,11 +548,13 @@ def main():
     state = load_json(STATE_FILE, {"processed": {}})
     state.setdefault("processed", {})
     per_channel = config.get("videos_per_channel", 5)
+    max_age_days = config.get("max_age_days", 30)
     api = transcript_api()
     new_files = []
     video_errors = 0
     rate_limited = 0
     stop = False
+    deadline = time.monotonic() + MAX_RUNTIME_SECONDS
 
     for ch in config["channels"]:
         handle = ch["handle"]
@@ -528,7 +569,14 @@ def main():
             channels_failed += 1
             continue
 
-        for v in feed_videos(root, per_channel):
+        for v in feed_videos(root, per_channel, max_age_days):
+            if time.monotonic() > deadline:
+                print(f"\n::warning::Time budget of {MAX_RUNTIME_SECONDS:.0f}s "
+                      f"reached — stopping. Progress is saved; the next run "
+                      f"continues from here.", file=sys.stderr)
+                stop = True
+                break
+
             vid = v["video_id"]
             if vid in state["processed"]:
                 print(f"  [skip] already have: {v['title']}")
@@ -557,7 +605,7 @@ def main():
                 record["transcript_file"] = str(out_file.relative_to(BASE))
                 record["status"] = "ok"
                 new_files.append(str(out_file.relative_to(BASE)))
-                print(f"  [new]  saved transcript: {v['title']}")
+                print(f"  [new]  saved transcript ({v['views']:,} views): {v['title']}")
             except (TranscriptsDisabled, NoTranscriptFound):
                 record["status"] = "no_transcript"
                 print(f"  [warn] no transcript available: {v['title']}")
