@@ -92,13 +92,17 @@ Settings → Secrets and variables → Actions → **New repository secret**
 
 | Secret | Required | What it is |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | Yes | Anthropic API key (`sk-ant-api...`) |
+| `ANTHROPIC_API_KEY_AI` | Yes | Anthropic API key (`sk-ant-api...`) — note the `_AI` suffix |
 | `GMAIL_APP_PASSWORD` | Yes | Gmail **app password** — 16 characters, *not* your normal password |
 | `WEBSHARE_PROXY_USERNAME` | Yes | Webshare **Residential** proxy username — see the IP section above |
 | `WEBSHARE_PROXY_PASSWORD` | Yes | Webshare Residential proxy password |
 
 Secrets do **not** carry over from other repositories — even if the values are identical to
 `ytstock`'s, they must be added here separately.
+
+The Anthropic key is named **`ANTHROPIC_API_KEY_AI`**, not `ANTHROPIC_API_KEY`, so it can never be
+confused with the financial pipeline's key. The two repos can hold entirely separate API keys —
+useful for billing them apart, or revoking one without touching the other.
 
 ### The Gmail app password
 

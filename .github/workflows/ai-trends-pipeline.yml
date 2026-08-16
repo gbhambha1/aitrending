@@ -7,8 +7,10 @@
 # to hit, so there is no DST gate job — the exact minute does not matter and
 # the schedule never needs a seasonal edit.
 #
-# Required repo secrets:
-#   ANTHROPIC_API_KEY         Anthropic API key (sk-ant-api...)
+# Required repo secrets. The Anthropic key is deliberately named with an _AI
+# suffix so it never collides with the financial pipeline's ANTHROPIC_API_KEY —
+# the two repos hold separate secrets and can use separate keys.
+#   ANTHROPIC_API_KEY_AI      Anthropic API key (sk-ant-api...)
 #   GMAIL_APP_PASSWORD        Gmail app password (16 chars)
 #   WEBSHARE_PROXY_USERNAME   Residential proxy user  \  without these two the
 #   WEBSHARE_PROXY_PASSWORD   Residential proxy pass  /  fetch step finds nothing
@@ -75,10 +77,10 @@ jobs:
 
       - name: Check API key secret shape (safe - prefix and length only)
         env:
-          TOKEN: ${{ secrets.ANTHROPIC_API_KEY }}
+          TOKEN: ${{ secrets.ANTHROPIC_API_KEY_AI }}
         run: |
           if [ -z "$TOKEN" ]; then
-            echo "::error::ANTHROPIC_API_KEY secret is EMPTY or missing — check the secret name under Settings > Secrets and variables > Actions"
+            echo "::error::ANTHROPIC_API_KEY_AI secret is EMPTY or missing — check the secret name under Settings > Secrets and variables > Actions"
             exit 1
           fi
           echo "key length: ${#TOKEN}"
@@ -92,7 +94,7 @@ jobs:
       - name: Summarize new videos (Claude)
         uses: anthropics/claude-code-action@v1
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY_AI }}
           show_full_output: true
           # Alternative (bill a Claude Pro/Max subscription instead):
           # claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}  # from `claude setup-token`
@@ -239,7 +241,7 @@ jobs:
 
           Run log: $RUN_URL
 
-          Common causes: expired ANTHROPIC_API_KEY, Anthropic credit exhausted,
+          Common causes: expired ANTHROPIC_API_KEY_AI, Anthropic credit exhausted,
           expired or exhausted proxy credentials, or YouTube blocking the
           runner IP during the fetch step.
           EOF
