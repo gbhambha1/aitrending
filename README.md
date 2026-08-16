@@ -28,26 +28,44 @@ There is no DST gate and no fixed local time to hit — unlike the financial pip
 keys off a market close, so the exact minute doesn't matter and the schedule never needs a seasonal
 edit.
 
-## ⚠️ The proxy is not optional
+## 🌐 The IP problem — test before you pay for a proxy
 
-**YouTube blocks datacenter IP ranges, which includes every GitHub Actions runner.** Without a
-proxy, the fetch step will return 0 videos on every run while the workflow reports success — the
-pipeline looks healthy and ingests nothing. (This is exactly what happened to `ytstock`, where the
-transcripts all arrived via manual commits instead.)
+YouTube aggressively blocks **datacenter IP ranges**, which includes every GitHub Actions runner.
+Two requests happen per video and only one is at risk:
 
-The fix is a **residential proxy**, around $1–3/month. `youtube-transcript-api` has built-in support
-for Webshare:
+| Request | Endpoint | At risk? |
+|---|---|---|
+| Discovery — what's new on a channel | `youtube.com/feeds/videos.xml` | Generally no — static XML, no bot detection |
+| Transcript — the actual text | `youtube.com/watch` + timedtext | **Yes.** This is where the blocking happens |
 
-1. Sign up at [webshare.io](https://www.webshare.io/) and buy a residential proxy plan.
+The evidence that this bites is the sibling repo: `ytstock`'s fetch step reports 0 new transcripts
+on cloud runners, and its transcripts all arrived via manual commits instead. But the blocking is a
+heuristic, not a published rule, and it varies by IP range.
+
+**So test it first — it's free.** Run the workflow once with no proxy secrets set. `fetch_videos.py`
+connects directly, prints `DIRECT connection (no proxy configured)` at startup, and the run emits a
+loud warning if every request failed. One run tells you which situation you're in:
+
+- **Transcripts came back** → you never needed a proxy. Ignore the rest of this section.
+- **0 videos, all errors** → confirmed blocked; set up a proxy below.
+
+### If you do need one
+
+You need a **residential IP**, not Webshare specifically. `youtube-transcript-api` has built-in
+support for Webshare (~$1–3/month), which is why it's the documented path:
+
+1. Sign up at [webshare.io](https://www.webshare.io/) and buy a **residential** proxy plan.
 2. Copy the **proxy username and password** (not your account login).
 3. Add them as repo secrets — `WEBSHARE_PROXY_USERNAME` and `WEBSHARE_PROXY_PASSWORD`.
 
-`fetch_videos.py` picks them up automatically and routes both the RSS feed and the transcript
-requests through the proxy. It also supports any generic proxy via a `YT_PROXY_URL` environment
-variable.
+Any other provider (Bright Data, IPRoyal, Oxylabs, Smartproxy) works too — set `YT_PROXY_URL` to its
+proxy URL instead. `fetch_videos.py` routes both the feed and the transcript requests through
+whichever is configured.
 
-With no proxy configured, the script prints `DIRECT connection (no proxy configured)` at startup and
-the workflow emits a warning — so a silently-empty run is at least a loud one.
+**What won't work:** the official YouTube Data API v3 is unblocked but only downloads captions for
+videos *you own*, so it can't help here; a cheap VPS is another datacenter IP; free proxy lists are
+unreliable. The only genuinely free option is running the fetch from a residential connection —
+i.e. your own machine.
 
 ## Repository secrets
 
@@ -57,8 +75,8 @@ Settings → Secrets and variables → Actions → **New repository secret**
 |---|---|---|
 | `ANTHROPIC_API_KEY` | Yes | Anthropic API key (`sk-ant-api...`) |
 | `GMAIL_APP_PASSWORD` | Yes | Gmail **app password** — 16 characters, *not* your normal password |
-| `WEBSHARE_PROXY_USERNAME` | In practice, yes | Residential proxy username |
-| `WEBSHARE_PROXY_PASSWORD` | In practice, yes | Residential proxy password |
+| `WEBSHARE_PROXY_USERNAME` | Only if blocked | Residential proxy username — see the IP section above; test without it first |
+| `WEBSHARE_PROXY_PASSWORD` | Only if blocked | Residential proxy password |
 
 Secrets do **not** carry over from other repositories — even if the values are identical to
 `ytstock`'s, they must be added here separately.
