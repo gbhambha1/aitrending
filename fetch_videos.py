@@ -51,7 +51,15 @@ TRANSCRIPTS_DIR = BASE / "transcripts"
 ATOM = "{http://www.w3.org/2005/Atom}"
 YT = "{http://www.youtube.com/xml/schemas/2015}"
 
-FETCH_DELAY_SECONDS = 3  # be gentle with YouTube
+# Be gentle with YouTube. This applies after EVERY attempt, successful or not:
+# skipping it on failures turns a bad patch into a retry storm, which is what
+# escalates into 429s in the first place.
+FETCH_DELAY_SECONDS = float(os.environ.get("FETCH_DELAY_SECONDS", "4"))
+
+# Consecutive rate-limit hits before abandoning the run. Progress is saved
+# after every success, so stopping early costs nothing -- the next run picks
+# up where this one left off, and backing off beats digging the hole deeper.
+RATE_LIMIT_GIVE_UP = int(os.environ.get("RATE_LIMIT_GIVE_UP", "4"))
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
 
 # A channel ID is always "UC" + 22 chars from the URL-safe base64 alphabet.
@@ -433,6 +441,40 @@ def safe_name(text):
     return re.sub(r"[^\w\- ]", "", text).strip()[:80]
 
 
+def pause(seconds):
+    if seconds > 0:
+        time.sleep(seconds)
+
+
+def is_rate_limited(exc):
+    """True when YouTube/Google threw us at the 429 'sorry' interstitial."""
+    text = str(exc)
+    return "429" in text or "/sorry/" in text or "too many" in text.lower()
+
+
+def is_not_yet_available(exc):
+    """True for premieres and live streams that have no captions *yet*.
+
+    Distinct from a permanent failure: these get captions once the broadcast
+    finishes, so they should be retried on a later run rather than recorded
+    as processed.
+    """
+    text = str(exc).lower()
+    return (
+        "live event will begin" in text
+        or "premiere" in text
+        or "live stream recording is not available" in text
+        or ("unplayable" in text and "live" in text)
+    )
+
+
+def backoff(attempt):
+    """Exponential wait after a rate-limit hit: 15s, 30s, 60s, capped at 120s."""
+    delay = min(15 * (2 ** (attempt - 1)), 120)
+    print(f"    backing off {delay}s before continuing")
+    pause(delay)
+
+
 def fetch_transcript(api, video_id):
     fetched = api.fetch(video_id, languages=["en", "en-US", "en-GB"])
     return " ".join(s.text for s in fetched.snippets)
@@ -462,13 +504,16 @@ def main():
         sys.exit(3)
 
     print("\n=== Resolving channel IDs ===")
-    blocked = ensure_channel_ids(config)
+    channels_failed = ensure_channel_ids(config)
 
     state = load_json(STATE_FILE, {"processed": {}})
     state.setdefault("processed", {})
     per_channel = config.get("videos_per_channel", 5)
     api = transcript_api()
     new_files = []
+    video_errors = 0
+    rate_limited = 0
+    stop = False
 
     for ch in config["channels"]:
         handle = ch["handle"]
@@ -480,7 +525,7 @@ def main():
             root = fetch_feed(ch["channel_id"])
         except Exception as e:
             print(f"  feed error: {e}", file=sys.stderr)
-            blocked += 1
+            channels_failed += 1
             continue
 
         for v in feed_videos(root, per_channel):
@@ -520,16 +565,40 @@ def main():
                 record["status"] = "unavailable"
                 print(f"  [warn] video unavailable: {v['title']}")
             except Exception as e:
+                pause(FETCH_DELAY_SECONDS)  # never retry-storm past a failure
+                if is_not_yet_available(e):
+                    # A premiere or live stream that hasn't finished. It will
+                    # have captions later, so deliberately do NOT record it --
+                    # a future run should pick it up.
+                    print(f"  [wait] not available yet (live/premiere): {v['title']}")
+                    continue
+                if is_rate_limited(e):
+                    rate_limited += 1
+                    print(f"  [429]  rate limited on: {v['title']}", file=sys.stderr)
+                    if rate_limited >= RATE_LIMIT_GIVE_UP:
+                        print(
+                            f"\n::warning::Stopping early — rate limited "
+                            f"{rate_limited} times. Progress so far is saved; "
+                            f"the next run resumes where this one stopped.",
+                            file=sys.stderr,
+                        )
+                        stop = True
+                        break
+                    backoff(rate_limited)
+                    continue
                 # Leave it out of state so we retry next run.
                 print(f"  [error] {v['title']}: {type(e).__name__}: {e}", file=sys.stderr)
-                blocked += 1
+                video_errors += 1
                 continue
 
             state["processed"][vid] = record
             STATE_FILE.write_text(
                 json.dumps(state, indent=2) + "\n", encoding="utf-8"
             )
-            time.sleep(FETCH_DELAY_SECONDS)
+            pause(FETCH_DELAY_SECONDS)
+
+        if stop:
+            break
 
     print(f"\nDone. {len(new_files)} new transcript(s).")
 
@@ -538,13 +607,21 @@ def main():
         for f in new_files:
             print(f"  {f}")
 
-    # A totally failed fetch and a genuinely quiet day both end in
-    # "0 new transcript(s)" -- and reporting the first as success is exactly
-    # how a broken pipeline stays green for weeks. If EVERY channel failed on
-    # connectivity, that is an infrastructure error: exit non-zero so the run
-    # fails loudly and the failure-alert email fires.
+    if rate_limited:
+        print(f"Rate limited {rate_limited} time(s).")
+    if video_errors:
+        print(f"{video_errors} video(s) failed for other reasons.")
+
+    # Anything actually fetched is worth summarizing, so a partial run is a
+    # success -- the transcripts are on disk and state.json has advanced.
+    if new_files:
+        return
+
+    # Nothing fetched. Distinguish a genuinely quiet day (fine) from a run
+    # that reached nothing (not fine). Reporting the second as success is
+    # exactly how a broken pipeline stays green for weeks.
     total = len(config["channels"])
-    if blocked >= total and not new_files:
+    if channels_failed >= total:
         print(
             f"\n::error::All {total} channels failed to connect — this run "
             f"reached nothing, so it is NOT evidence of a quiet day."
@@ -556,6 +633,16 @@ def main():
                 "WEBSHARE_PROXY_USERNAME / WEBSHARE_PROXY_PASSWORD."
             )
         sys.exit(3)
+
+    if rate_limited or video_errors:
+        print(
+            f"\n::error::No transcripts retrieved — {rate_limited} rate-limit "
+            f"and {video_errors} other failure(s). Not a quiet day; the "
+            f"channels were listed but no transcript could be downloaded."
+        )
+        sys.exit(3)
+
+    # Zero new, zero errors: everything was already in state.json. Correct.
 
 
 if __name__ == "__main__":
