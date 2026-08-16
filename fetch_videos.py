@@ -108,6 +108,36 @@ def proxy_url(rotate=None):
     return os.environ.get("YT_PROXY_URL", "").strip()
 
 
+def describe_credentials():
+    """Report the SHAPE of the proxy credentials without ever printing them.
+
+    CI masks the secret values, so the only way to spot the commonest mistake
+    -- pasting the Webshare *account login* instead of the generated proxy
+    credentials -- is to describe them. A username containing '@' is an email,
+    and an email is never a Webshare proxy username.
+    """
+    user = (os.environ.get("WEBSHARE_PROXY_USERNAME") or "").strip()
+    password = (os.environ.get("WEBSHARE_PROXY_PASSWORD") or "").strip()
+
+    problems = []
+    if "@" in user:
+        problems.append(
+            "username contains '@' — that is an account email, NOT a Webshare "
+            "proxy username. Copy the generated pair from Proxy → Settings."
+        )
+    if any(c.isupper() for c in user):
+        problems.append("username has uppercase characters — Webshare proxy usernames are lowercase")
+    if not user:
+        problems.append("username is empty")
+    if not password:
+        problems.append("password is empty")
+
+    print(f"  credential shape: username {len(user)} chars, password {len(password)} chars")
+    for p in problems:
+        print(f"  ::warning::{p}")
+    return problems
+
+
 def preflight():
     """Probe the proxy once and settle which username form it accepts.
 
@@ -119,6 +149,8 @@ def preflight():
     global _ROTATE
     if not os.environ.get("WEBSHARE_PROXY_USERNAME"):
         return ""  # direct or generic proxy -- nothing to probe
+
+    describe_credentials()
 
     probe = "https://www.youtube.com/robots.txt"
     last = None
