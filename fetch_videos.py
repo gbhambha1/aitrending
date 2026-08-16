@@ -28,6 +28,7 @@ import sys
 import time
 import xml.etree.ElementTree as ET
 from pathlib import Path
+from urllib.error import HTTPError, URLError
 from urllib.request import urlopen, Request, ProxyHandler, build_opener
 
 from youtube_transcript_api import YouTubeTranscriptApi
@@ -67,26 +68,37 @@ def load_json(path, default):
 # Proxy plumbing
 # --------------------------------------------------------------------------
 
-def webshare_user():
+# Which username form the proxy actually accepts. None = not yet determined,
+# and preflight() settles it by trying both rather than making you guess.
+_ROTATE = None
+
+
+def webshare_user(rotate=None):
     """The Webshare username, with the rotating-endpoint suffix if applicable.
 
     The "-rotate" suffix asks for a different exit IP per request and is what
     Webshare's *rotating residential* endpoint expects. It is NOT valid on
     other plan types -- sending it with a datacenter ("Proxy Server") account
-    is rejected with 407. Set WEBSHARE_ROTATE=0 to send the bare username.
+    is rejected with 407, so preflight() tries both forms.
     """
     user = (os.environ.get("WEBSHARE_PROXY_USERNAME") or "").strip()
     if not user:
         return ""
-    if os.environ.get("WEBSHARE_ROTATE", "1").strip() in ("0", "false", "no"):
+    if rotate is None:
+        rotate = _ROTATE
+    if rotate is None:  # nothing probed yet -- fall back to the env preference
+        rotate = os.environ.get("WEBSHARE_ROTATE", "1").strip() not in (
+            "0", "false", "no"
+        )
+    if not rotate:
         return user
     # Don't double-append if the credential already carries the suffix.
     return user if user.endswith("-rotate") else f"{user}-rotate"
 
 
-def proxy_url():
+def proxy_url(rotate=None):
     """The proxy URL for plain urllib calls, or '' for a direct connection."""
-    user = webshare_user()
+    user = webshare_user(rotate)
     # .strip() matters: a secret pasted with a trailing newline authenticates
     # as a different user and comes back as an opaque 407.
     password = (os.environ.get("WEBSHARE_PROXY_PASSWORD") or "").strip()
@@ -94,6 +106,50 @@ def proxy_url():
         host = os.environ.get("WEBSHARE_PROXY_HOST", "p.webshare.io:80").strip()
         return f"http://{user}:{password}@{host}/"
     return os.environ.get("YT_PROXY_URL", "").strip()
+
+
+def preflight():
+    """Probe the proxy once and settle which username form it accepts.
+
+    Webshare rejects the wrong form with a bare 407 that looks identical to
+    bad credentials, so trying both here converts 'guess and re-run' into one
+    definite answer printed at the top of the log. Returns an error string if
+    the proxy is unusable, or "" if we are good to go.
+    """
+    global _ROTATE
+    if not os.environ.get("WEBSHARE_PROXY_USERNAME"):
+        return ""  # direct or generic proxy -- nothing to probe
+
+    probe = "https://www.youtube.com/robots.txt"
+    last = None
+    for rotate in (True, False):
+        label = "-rotate" if rotate else "bare"
+        url = proxy_url(rotate)
+        opener_ = build_opener(ProxyHandler({"http": url, "https": url}))
+        try:
+            opener_.open(Request(probe, headers={"User-Agent": UA}), timeout=30)
+        except HTTPError as e:
+            # The DESTINATION answered (403/404/...), so the tunnel and the
+            # proxy credentials both worked. That is all this probe tests.
+            _ROTATE = rotate
+            print(f"  proxy auth OK with {label} username "
+                  f"(YouTube replied {e.code} — not an auth failure)")
+            return ""
+        except URLError as e:
+            last = e
+            if "407" in str(e):
+                print(f"  {label} username rejected (407)")
+                continue  # wrong form, or bad credentials — try the other
+            # The PROXY refused for some other reason; not a username question,
+            # so trying the other form would just repeat the same error.
+            return f"could not reach the proxy ({e}). " + explain(e)
+        _ROTATE = rotate
+        print(f"  proxy OK with {label} username")
+        return ""
+
+    return (
+        f"both username forms were rejected with 407 ({last}). " + explain(last)
+    )
 
 
 def explain(exc):
@@ -129,12 +185,22 @@ def transcript_api():
     """A YouTubeTranscriptApi configured with the proxy, if one is set."""
     user = (os.environ.get("WEBSHARE_PROXY_USERNAME") or "").strip()
     password = (os.environ.get("WEBSHARE_PROXY_PASSWORD") or "").strip()
-    if user and password and WebshareProxyConfig is not None:
-        return YouTubeTranscriptApi(
-            proxy_config=WebshareProxyConfig(
-                proxy_username=user, proxy_password=password
+    if user and password:
+        # WebshareProxyConfig appends "-rotate" itself, so it is only correct
+        # when preflight found that form works. Otherwise drive the same URL
+        # we proved good through the generic config, keeping both code paths
+        # on identical credentials.
+        if _ROTATE is False and GenericProxyConfig is not None:
+            url = proxy_url()
+            return YouTubeTranscriptApi(
+                proxy_config=GenericProxyConfig(http_url=url, https_url=url)
             )
-        )
+        if WebshareProxyConfig is not None:
+            return YouTubeTranscriptApi(
+                proxy_config=WebshareProxyConfig(
+                    proxy_username=user, proxy_password=password
+                )
+            )
     generic = os.environ.get("YT_PROXY_URL")
     if generic and GenericProxyConfig is not None:
         return YouTubeTranscriptApi(
@@ -257,6 +323,18 @@ def main():
         sys.exit(1)
 
     print(f"Network: {describe_proxy()}")
+
+    # Settle the proxy question once, up front. Without this the same 407 is
+    # repeated per channel and the real answer is buried.
+    print("\n=== Proxy preflight ===")
+    problem = preflight()
+    if problem:
+        print(f"  FAILED: {problem}")
+        print(
+            "\n::error::Proxy authentication failed — the run reached nothing. "
+            "Fix the proxy credentials or plan type, then re-run."
+        )
+        sys.exit(3)
 
     print("\n=== Resolving channel IDs ===")
     blocked = ensure_channel_ids(config)
