@@ -1,3 +1,106 @@
 {
-  "processed": {}
+  "processed": {
+    "R4_fHzTo0IM": {
+      "title": "Stanford AA203 Optimal and Learning-Based Control | Spring 2026 | Lecture 5: Computational Methods",
+      "published": "2026-08-11",
+      "channel": "Stanford Online",
+      "url": "https://www.youtube.com/watch?v=R4_fHzTo0IM",
+      "transcript_file": "transcripts/stanfordonline/2026-08-11_Stanford AA203 Optimal and Learning-Based Control  Spring 2026  Lecture 5 Comput_R4_fHzTo0IM.txt",
+      "status": "ok"
+    },
+    "a1g9U_5zO54": {
+      "title": "Stanford AA203 Optimal and Learning-Based Control | Spring 2026 | Lecture 18: RL Policy Optimization",
+      "published": "2026-08-13",
+      "channel": "Stanford Online",
+      "url": "https://www.youtube.com/watch?v=a1g9U_5zO54",
+      "transcript_file": "transcripts/stanfordonline/2026-08-13_Stanford AA203 Optimal and Learning-Based Control  Spring 2026  Lecture 18 RL Po_a1g9U_5zO54.txt",
+      "status": "ok"
+    },
+    "Fl5EjGhQjgs": {
+      "title": "Stanford AA203 Optimal and Learning-Based Control | Spring 2026 | Lecture 10: Reachibility Analysis",
+      "published": "2026-08-12",
+      "channel": "Stanford Online",
+      "url": "https://www.youtube.com/watch?v=Fl5EjGhQjgs",
+      "transcript_file": "transcripts/stanfordonline/2026-08-12_Stanford AA203 Optimal and Learning-Based Control  Spring 2026  Lecture 10 Reach_Fl5EjGhQjgs.txt",
+      "status": "ok"
+    },
+    "1YdgSwEtf_s": {
+      "title": "AStanford AA203 Optimal and Learning-Based Control | Spring 2026 | Lecture 8: LQR-Style Algorithms",
+      "published": "2026-08-12",
+      "channel": "Stanford Online",
+      "url": "https://www.youtube.com/watch?v=1YdgSwEtf_s",
+      "transcript_file": "transcripts/stanfordonline/2026-08-12_AStanford AA203 Optimal and Learning-Based Control  Spring 2026  Lecture 8 LQR-S_1YdgSwEtf_s.txt",
+      "status": "ok"
+    },
+    "xcTRTotS9-A": {
+      "title": "Firebird Launches CIS Region\u2019s Largest AI Factory in Armenia",
+      "published": "2026-08-08",
+      "channel": "NVIDIA",
+      "url": "https://www.youtube.com/watch?v=xcTRTotS9-A",
+      "transcript_file": "transcripts/nvidia/2026-08-08_Firebird Launches CIS Regions Largest AI Factory in Armenia_xcTRTotS9-A.txt",
+      "status": "ok"
+    },
+    "CNM6Mmqrfeg": {
+      "title": "NVIDIA Spectrum-X Ethernet Photonics | Now in Full Production",
+      "published": "2026-08-12",
+      "channel": "NVIDIA",
+      "url": "https://www.youtube.com/watch?v=CNM6Mmqrfeg",
+      "status": "no_transcript"
+    },
+    "XGCTh8BNibY": {
+      "title": "Jaguar Type 01 Visits NVIDIA HQ",
+      "published": "2026-08-14",
+      "channel": "NVIDIA",
+      "url": "https://www.youtube.com/watch?v=XGCTh8BNibY",
+      "status": "no_transcript"
+    },
+    "EWlD1dy5lck": {
+      "title": "NVIDIA interns brought their energy to teams across the company this summer",
+      "published": "2026-08-14",
+      "channel": "NVIDIA",
+      "url": "https://www.youtube.com/watch?v=EWlD1dy5lck",
+      "transcript_file": "transcripts/nvidia/2026-08-14_NVIDIA interns brought their energy to teams across the company this summer_EWlD1dy5lck.txt",
+      "status": "ok"
+    },
+    "Np0afRWtdp8": {
+      "title": "Why AI Agents Need More Than One Model",
+      "published": "2026-08-04",
+      "channel": "NVIDIA",
+      "url": "https://www.youtube.com/watch?v=Np0afRWtdp8",
+      "transcript_file": "transcripts/nvidia/2026-08-04_Why AI Agents Need More Than One Model_Np0afRWtdp8.txt",
+      "status": "ok"
+    },
+    "bm1BjOjS7sQ": {
+      "title": "Another DeepSeek Moment Has Arrived",
+      "published": "2026-08-03",
+      "channel": "Two Minute Papers",
+      "url": "https://www.youtube.com/watch?v=bm1BjOjS7sQ",
+      "transcript_file": "transcripts/TwoMinutePapers/2026-08-03_Another DeepSeek Moment Has Arrived_bm1BjOjS7sQ.txt",
+      "status": "ok"
+    },
+    "ppQh4Tc9BmM": {
+      "title": "The Billion Dollar AI Race Just Broke",
+      "published": "2026-08-05",
+      "channel": "Two Minute Papers",
+      "url": "https://www.youtube.com/watch?v=ppQh4Tc9BmM",
+      "transcript_file": "transcripts/TwoMinutePapers/2026-08-05_The Billion Dollar AI Race Just Broke_ppQh4Tc9BmM.txt",
+      "status": "ok"
+    },
+    "vO6SWG-jxvE": {
+      "title": "DeepMind Just Changed How AI Sees The World",
+      "published": "2026-08-07",
+      "channel": "Two Minute Papers",
+      "url": "https://www.youtube.com/watch?v=vO6SWG-jxvE",
+      "transcript_file": "transcripts/TwoMinutePapers/2026-08-07_DeepMind Just Changed How AI Sees The World_vO6SWG-jxvE.txt",
+      "status": "ok"
+    },
+    "JQ97GiDwPxc": {
+      "title": "OpenAI\u2019s AI Agents Just Crossed A Line",
+      "published": "2026-08-11",
+      "channel": "Two Minute Papers",
+      "url": "https://www.youtube.com/watch?v=JQ97GiDwPxc",
+      "transcript_file": "transcripts/TwoMinutePapers/2026-08-11_OpenAIs AI Agents Just Crossed A Line_JQ97GiDwPxc.txt",
+      "status": "ok"
+    }
+  }
 }

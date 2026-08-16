@@ -1,0 +1,934 @@
+Title: AStanford AA203 Optimal and Learning-Based Control | Spring 2026 | Lecture 8: LQR-Style Algorithms
+Channel: Stanford Online
+Published: 2026-08-12
+URL: https://www.youtube.com/watch?v=1YdgSwEtf_s
+------------------------------------------------------------
+OK, so let's get started
+with today's lecture. So as you remember,
+on Monday, we looked at the optimal
+control problem through a closed-loop
+lens whereby the object we want to optimize
+over is a closed loop policy. And we introduced the
+most fundamental algorithm that we have at our
+disposal to compute closed-loop optimal
+policies, which is referred to as dynamic programming. We derive the algorithm
+for a discrete time formulation of the problem. We will actually extend this
+derivation to continuous time next week, which will lead us
+to the Hamilton--Jacobi--Bellman equation and the
+reachability theory. And to do so, we discussed some
+structure, some key structure that the problem, the
+optimal control problem as we formulated [INAUDIBLE] that
+we can leverage to derive dynamic programming equations. And then I presented
+the LQR as one example that allowed me to
+show you how to apply the dynamic
+programming, recursion. And in time, LQR is
+a problem that is of interest in its own right. Now in the second
+pset, you have a number of opportunities to
+strengthen your familiarity with dynamic
+programming and LQR. You have one exercise that
+shows how much computation you save by running dynamic
+programming as a solution algorithm as opposed
+to brute force. You have one exercise that
+forces you to implement from scratch an LQR algorithm. I know that you
+could use an AI agent to do so, but at least
+for once in your life, try to do it from scratch. And then we'll transition
+into the material that we're going
+to discuss today. Specifically, we
+talked about LQR at the end of the last lecture. Today, rather than introducing a
+new concept in optimal control, we are actually going to
+spend an entire lecture on how we can leverage LQR in
+a variety of different control settings. As I said, LQR is
+a formulation that is of interest in
+its own right, what we use in the field of controls
+and robotics and beyond. So I'm going to dig a little bit
+deeper on how you can use LQR as part of the control loop. Then next week, we'll
+generalize the formulation to stochastic formulation. So we'll assume the
+dynamics are perturbed by stochastic disturbances. That will lead us to
+the stochastic version of dynamic programming
+equations that you may be already familiar with if
+you have taken a class Decision Making Under Uncertainty. And then next Wednesday, we
+will cover the continuous time formulation of closed-loop
+optimal control, which will lead us to the
+extension of the dynamic programming algorithms
+in continuous time, referred to as the
+Hamilton--Jacobi--Bellman equation. After that, we'll
+then move to MPC, just to give you an idea
+about where we're going. So as I said, today, we're going
+to focus on LQR-style algorithms for optimal control. I will claim that
+after PID control, LQR is the most widely
+controlled theoretical algorithm used out there. So it's very important
+for you to familiarize with the concept, particularly
+LQR, as we set it up. We set it up with the goal
+of finding a control that drives the state to the origin. That's why it's referred to
+as linear-quadratic regulator. The goal is to do regulation to
+drive the state to the origin. But in general, especially
+in a robotic system, you're not that interested in
+driving the state to the origin. You want to drive the state
+toward a desired behavior or a desired trajectory. Can we still do that with LQR? And the answer is yes. And we look at how to use LQR
+in this setting by looking at LQR as a mechanism to
+do trajectory tracking, both in a linear setting
+and a nonlinear setting. Yeah. Hi. You said that this is the
+most common outside of PID. I was wondering if you could
+talk maybe for 30 seconds or so of why you would
+choose this over PID instead of [INAUDIBLE]. Well, the problem with PID
+is that you don't really have a notion of an
+objective function. In LQR, you can
+more intentionally specify your objectives. There are indirect ways to shape
+the response of your system with PID controllers. And if you have taken a class
+like ENGINEERING 105 or 205, you spend quite a
+bit of time in terms of mapping relationships
+between phase margin and gain margin or placement
+of poles with the rise time and so on. But it's a bit indirect. With the LQR, you have
+a very explicit handle on how to optimize operations. But on top of it, LQR,
+as we will see today, is very flexible. It can be used not just
+for stabilization purposes, but also for trajectory
+tracking purposes, and even as a tool to compute
+trajectories for optimal control problems. Would you say that [INAUDIBLE]
+is simple to implement? Actually, it's
+very complementary. So typically, PID is used as
+the last step of your control hierarchy when you really have
+to manipulate the signals that go into the actuators
+literally throttle, steering, opening valves, and such. LQR is set just above PIDs. This one's more
+about trajectories. So don't view them as in
+opposition to each other. They're very much complementary. And by the end of
+this class, we'll have a bit more of a
+discussion about how you bring all these tools together. Typically, the way that
+a decision-making logic is architected is that
+you have typically PID at the end of the
+day at the lowest level. Then you have some
+trajectory optimizer which could be LQR-derived. It could be SCP. It could be some
+other direct method. On top of it, you still
+have to set objectives. So how do you do that? You can use techniques
+from decision-making. These days, maybe
+you may want to use more data-driven techniques. You can use large language
+models, vision language models. And the difference
+between these layers is essentially the
+granularity at which the physical knowledge
+and physical properties of the system are leveraged. Typically, the level
+of decision-making, you don't really reason
+about all the nuanced aspects of your dynamics. For example, in
+your brain, if you want to set the goal
+of moving to that door, you don't really reason about
+all the joint displacement in your arms and so on. When you start optimizing
+for your trajectory, probably you take into account
+that you are a dynamical system. You need to have some
+space around you. But still, you're not thinking
+about all the joint level. And then you start
+going down [INAUDIBLE]. Does that make sense? Yeah, very good question. All right. So as I said, we're going to
+look at LQR as an algorithm to derive tracking
+algorithms, also as a way to devise a new way to compute
+trajectories for optimal control problems, which
+sounds a bit weird. So we derive LQR as a
+solution for optimal control problem in a very specific
+setting of linear dynamics and quadratic cost. We'll see how that then
+can be used as a way to derive a new direct
+methods for optimal control. It's a bit confusing,
+but we'll get there. And then we'll look
+at this algorithm referred to as iterative LQR. Quite popular. And then we're going to look
+at the refinement of iterative LQR referred to as differential
+dynamic programming. All of this is
+rooted in LQR ideas. Now some of the equations will
+get a little bit convoluted. For algebraic purposes, there is
+nothing particularly complicated here. So I won't be printing
+all of the update equations for the different
+matrices and gains and so on. Everything is explicitly
+provided in the lecture notes that are referenced
+in this slide, and are also referenced
+in the syllabus. All right, so let's get started. So first of all,
+a recap about LQR. LQR is a very specific class of
+an optimal control problem where we don't have
+constraints on the state, we don't have constraints
+on the control. The dynamics are linear. xk equal A xk plus Bk uk. Note that the dynamics are not
+necessarily time-invariant. Actually, the state matrix
+A and B can depend on time, as denoted by the subscript k. This will become relevant
+later, why actually this is a useful property of LQR. And then we assume that
+we have a quadratic cost. So last time, we looked
+at the cost until here. So we have a quadratic
+penalty on the terminal state plus a running cost that entails
+a quadratic penalty on the state and quadratic penalty
+on the control. You can slightly
+generalize this cost. And that changes nothing in
+terms of derivations by also including cross
+terms, x times u. Why would you like to include
+this cross term into the cost function? Well, maybe in some
+situations, the amount to which you want to
+penalize the control effort might depend on the
+state you are in. But more mechanically,
+when we'll be using a LQR as a
+mechanism to devise tracking control
+algorithms, that will entail performing
+some linearization. So this additional
+cross terms will pop up in the cost function. So that's why I want to present
+the equation this slightly more generalized form. You can write the cost function
+here a bit more compactly in matrix form. You have the quadratic
+term on the state x transpose Q x quadratic on
+the controls u transpose R u. And then you have
+the cross terms x H u, u H x that sum
+together and give you the equation at the top. So the Bellman
+equation, as usual, entails minimizing
+over the control at time k, the current stage
+cost, plus the cost-to-go. And we know that in a QR, the
+cost-to-go is also quadratic, specifically if you do the
+derivation same as last time. So you start from the boundary
+condition, which is a quadratic, because of how we set
+up the terminal cost. And then you go one step later,
+you set the gradient equal to 0. Then you solve for the control. And then you plug that back
+into the right-hand side of the Bellman equation. You see that the cost
+is also quadratic. This stays exactly the same. So the addition of the cross
+term doesn't change anything. So you will find that the
+optimal control law is still a linear feedback in control. So it's a matrix times state. And the optimal cost is
+a quadratic in the state. Of course, L and
+P update equations will change slightly because
+now we have a cross term. Details of which are
+in the lecture notes. Not too important here to
+show the exact equations. You can generalize
+this formulation even further by now introducing
+not only cross terms, but also linear terms in
+the state and in the control and also constant terms. So now you have a cost function
+that is quadratic in the state, quadratic in a control,
+linear in the state, linear in control,
+plus a constant term. The main reason why we are
+interested in this kind of generalization
+is because when we are going to use LQR for
+tracking purposes [INAUDIBLE] perform linearizations, you
+have these additional terms that pop up. And you can even for LQR
+generalize the dynamics. So looking at the
+setting whereby xk plus 1 is equal to Ak xk
+plus Bk Uk plus dk. So now the dynamics
+are no longer linear. They're referred to
+as affine because you have a constant forcing term. Think of this term
+perhaps a disturbance, like, for example, a
+wind gust that we know will happen at time k. Well, you can do exactly
+the same derivation we did for standard LQR. So we write down the
+Bellman equation. We start from the
+final condition, which is now a quadratic plus
+linear plus constant terms. We set the gradient equal to 0. We solve for u. Then we plug that back
+into the right-hand side of the Bellman equation. So what you will find is
+that the optimal control policy is a linear feedback
+term plus a feedforward term. And the cost function
+is a quadratic that also has linear
+terms and constant terms. Yeah. So the equation
+when you're using for recapping that
+we're minimizing was slightly different than
+the one you talked about in last lecture. Yeah. So here, the main difference is
+that I'm adding this cross term. And my main point is that
+when you do the derivation, the structure of the control
+law and the optimal cost does not change. You still have linear
+feeding from the state and quadratic cost. Of course, the gain and the P
+are going to change slightly. But also, instead of
+using QN, you already had the H was there instead. It was switched like your
+terminal state was using [INAUDIBLE]. [INAUDIBLE] terminology? So you're saying
+that here I had an H. H. And then there
+was no H, though, when you were summing it. So it made it seem
+like it was completely a different matrix that
+you're multiplying against. Does that-- So here, instead
+of QN, we had what? The H. OK, that's fine. That's just a terminology. Yeah, OK. But then there wasn't any-- for example, there's a Q in
+there, but there is also-- [INAUDIBLE] [INAUDIBLE] Yeah, 100% So what I'm saying
+is that what we had last time was everything up to here. Yeah. But this Q is from-- it's also
+like that matrix [INAUDIBLE]. [INAUDIBLE] It's
+still just any-- Oh, it's not-- [INAUDIBLE] targets
+that you choose OK, it's not-- I'm going to call
+it like [INAUDIBLE]. I couldn't [INAUDIBLE]. OK. So don't think of
+it as the same key. No, no, no, no. This is just a generic matrix
+that you choose as a designer. So the idea of LQR is that
+once there's a type of problem, then everything is procedure. You automatically get
+to the optimal policy and the optimal cost. Now the bargain on
+you is not to solve the problem is to set it up. So your bargain is to pick
+R, to pick Q, to pick H, and to pick QR. And this is not always obvious. So this is called LQR tuning. It takes quite a bit actually
+to pick these parameters in such a way that you
+get your desired response. Like, for example, when I was
+tuning the LQR base, actually tracking algorithm
+for the [INAUDIBLE] it took about two
+or three months to actually get exactly the
+parameters that you really want so that you shape
+the right lateral response and longitudinal response. You want it to be,
+of course, safe, but also, you want it to be
+very pleasant for the user. So there is a little bit of
+an art and a little bit-- of course, you can use
+simulation to do that and so on and so forth. But the point being,
+those matrices are just placeholder
+symbols that you should then select as a designer. Even further, as I said, here,
+we are adding additional terms. So we have the ck. That is something that you
+will pick as a designer. We have these vectors 2k. This is something that you
+will pick as a designer, or as you will see
+when we do tracking. They are derived from a
+linearization process. But the main point here is that
+in this more general setup, the idea, the derivation
+is exactly the same. Actually, you may want to
+try to do it by yourself. And what you will get is that
+the optimal control policy now is a little bit different. So it still entail linear
+feedback on the state. For example, to your
+point, this thing here in the previous
+lecture was called fk. So, yeah, sorry for the mix-up. Lk xk plus Lk. So we have a linear
+feedback on the state. This is also what we had in
+the most basic version of LQR. But now we have a
+feedforward term. So a constant gain. Actually, there is a very
+intuitive interpretation of this control law structure. I'll come back to that later. And likewise, now
+the optimal cost is no longer just
+the x transpose P x. Also has linear terms in
+x and then a constant. All these values Pk, matrix
+Pk, vector pk, constant pk, Lk, capital K, and so
+on are all derived through Riccati-like
+equations, update equations. The specific
+implementation of which is provided in the notes that
+are a little bit cumbersome, not super useful to show here. So bottom line is that LQR
+can be generalized somewhat to cost, where you also have
+linear terms, constant terms, and cross penalty terms, and
+to dynamics that are affine. And the structure of the
+optimal control policy stays either the
+same or very similar, modulo the addition
+of a feedforward term, and also the structure
+of the optimal cost say essentially the
+same, modulo the addition of some linear terms
+and constant terms. That's it. Let's get to the
+interesting part here. So as I said last time, we
+looked at LQR as a mechanism to find controls that
+allow us to regulate the state of the origin. But in general, we
+are interested in more general settings whereby we are
+given some reference trajectory x bar 0, x bar 1,
+x bar 2, and so on. So we have the reference
+trajectory x bar 0, x bar 1, x bar n minus 1-- actually xm. And then u bar 0, u
+bar 1, u bar n minus 1. Of course, the control
+trajectory and the state trajectory are not independent
+of each other, are linked through the system equations. X is derived through
+the application of u through the system equations. Where is this reference
+trajectory coming from? Maybe from one of the
+[INAUDIBLE] methods we covered last time. So, for example, you run SCP
+on your general nonlinear optimal control problem. You computed a trajectory
+in open-loop form. And that's the trajectory
+that you would like to follow. But now the problem
+is that in real life, you have model mismatches. You have disturbances. So maybe you may not
+start exactly at x bar 0. Maybe you start here. Maybe there is some disturbance
+that brings you here. So the question is, how do
+we find a control u that brings the actual trajectory as
+close as possible to the desired pre-computed trajectory? That's the problem of
+trajectory tracking. Specifically, we want to
+find a sequence of controls. I put empty bracket
+here to mean that we want to find the full sequence
+of controls u0, u1, u2, all the way to u n minus 1. Somewhat close. And that will be
+more specific later. Somewhat close to the
+nominal control sequence, because that's the one that
+we would like to track. We want to track both the state
+trajectory and the control trajectory such that the
+tracking error defined as the difference between
+the realized trajectory, the sequence of states that your
+system actually goes through, and the desired trajectory-- so the sequence of states you
+would have liked to go through, as specified by the
+pre-computed trajectory-- is minimized. Does this sound like
+a reasonable problem? You're given a
+nominal trajectory. You want to find a sequence
+of controls that bring you back to that trajectory. So you want to-- so this will be delta x1. For some reason, some
+disturbance moved you here. Some disturbance that was
+unmodeled when you computed your nominal trajectory. Now you want to get back
+to your nominal trajectory. So what can you do? Let's first look at the
+simplest possible case. Not useful, but it allows to
+scaffold intuition, whereby the underlying
+dynamics are linear. So xk plus 1 is equal
+to Ak xk plus Bk uk. So for now, we
+assume the dynamics are linear time-varying. Now, the reference trajectory
+or nominal trajectory or desired trajectory-- these are all
+interchangeable terms-- it has to be a feasible
+trajectory for your system. So your nominal
+trajectory also has to satisfy x bar k plus 1
+equal Ak x bar k plus Bk uk. Again, a reference trajectory
+is a feasible trajectory for your system. For system. So then let's just take
+instead of reasoning in terms of absolute states or
+absolute controls, let's reason in terms of deviation variables. So we take the difference
+between these two equations. What we get is that
+delta xk plus 1 equal Ak delta xk plus
+Bk delta uk, where delta uk are the division
+variables with respect to the control. So they are defined
+as uk minus u bar k. So then you can see how the
+problem of tracking actually has been reformulated
+as an LQR problem with respect to the
+deviation variables. Why? Because our objective is
+to bring delta x to 0. Now we have a system
+that is purely defined in terms of delta
+x's and deviation variables. And we want to
+bring delta x to 0. So now we can see
+that the problem is to choose the deviation
+variables delta u such that delta x's goes to 0. If that happens, it means
+that xk goes to x bar k. And so you have
+satisfied your objective. Of course, when you run
+your system, you do not-- and this sometimes is
+a point of confusion. You do not control
+your system directly with your deviation variables. You have to go back. The control that actually you
+will inject in your system is equal to uk bar plus
+delta uk because you know that once you use
+uk as your control, then you go back into
+the difference equation. You will have the different--
+the system in terms of deviation variables is guaranteed
+to converge to 0, if you pick delta u such
+that delta x goes to 0. But how do you pick delta u
+such that delta x goes to 0? You set up an
+auxiliary LQR problem whereby you set up
+a cost function that is quadratic in the deviation
+variables for the state and quadratic in the deviation
+variables for the controls. You pick R, Q and QN. These are the design parameters. And then you just solve
+LQR with a Riccati equation that will give you the optimal
+delta uk as Lk times delta xk. And then you have found your
+desired sequence of controls to track your trajectory. Does this make sense? So we started from
+a tracking problem that a face value
+didn't have much-- didn't look quite different
+from a regulation problem. But then by reasoning in
+terms of deviation variables, we were able to reformulate
+the tracking problem as a regulation problem with
+respect to deviation variables. We then do control
+development in the space of deviation variables. And to do that, we formulate an
+auxiliary LQR problem with cost also defined [INAUDIBLE]
+deviation variables. And once you have found the
+optimal control law with respect to the deviation
+variables, you go back to the original
+control variables that are the ones
+that you actually inject into your system. And then you guarantee that
+with this choice, the deviation variables delta x
+will go to 0 simply by plugging the definition
+of delta u into the equation. Does that make sense? So look at now the
+structure of your control. So now the structure of
+your tracking controller has a feedforward term that
+is your nominal control. Of course, if your state is
+exactly equal to your desired state, this term is 0. This means that you are
+on the nominal trajectory, so you should indeed
+use the nominal control. So that's a sanity check. That makes sense. We'll look at the structure. So we have a
+feedforward term, which is your nominal control
+plus a feedback term that depending on how
+far the actual state is from the reference
+state, it pushes you back into your reference trajectory
+mediated through this k. So it's an open-loop term
+plus a closed-loop term. So this structure is
+actually widely used in controls and robotics. It's referred to as a
+two-step design, whereby the idea is that you
+first use techniques from open-loop control to
+find your nominal trajectory. And then you use techniques
+for closed-loop control to find a controller that
+locally tries to push you back onto your desired trajectory. Why is this useful? It tries to balance the two
+competing considerations. On the one hand, you want
+the computational efficiency of reason in terms of
+open-loop trajectories. But at the same time, you want
+to have the robustness that comes from closed-loop control. And here how everything
+is coming together. You use the techniques
+from last week to compute this object,
+and then the techniques from this week to compute
+a closed-loop controller. Of course, you could solve
+the optimal control problem in closed loop
+globally, but that would be extremely
+time-consuming and perhaps not even useful. Why is not even useful? And then I will get
+to your questions. Because right now
+the formulation that we have looked
+at is static. So the constraints
+are given and so on. But for a robotics application,
+for example, the environment is dynamic. So I have now the current
+situation of this room. I plan my path. But maybe one of your
+colleagues stands up. And now my constraint
+set changes because I also have a new
+additional collision constraints that I don't want to bump
+into the CLI if she stands up, which means that in general you
+have to reformulate this problem and recompute the
+solution to this problem periodically in time. So solving for a
+closed-loop control law that applies globally for
+all possible states of the world may even be wasteful
+because in case you know that you will
+never reach a state that is very far enough
+from where you are before you have to
+recompute anyway your problem. Does that make sense? All right. So question? I was going to ask, is
+the gain term L there? Is that positive, or does that
+also change as you [INAUDIBLE]? No. This is a-- well, it's constant,
+but the subscript k here means that it
+depends on the stage. So it's time-varying. Of course, if you change the
+formulation of the LQR problem, Lk would change. But otherwise, no, Lk
+does not change or is not a function of the state. It's a purely constant gain
+matrix given the current stage. Yeah. Just a clarifying question. So we get the bars from-- let's
+say we did [INAUDIBLE] and then reformulated by getting
+the delta where-- I guess I'm a little bit
+confused where when you got the delta of the uk. Now you know uk, and
+you know the bars-- No, you don't know uk. This is just the definition
+of change of variable. This is you know it. You know it. OK. [INAUDIBLE] This is you do not know it. You don't know it. And then solve for--
+you just solve for-- You just solve for
+delta u, though. And once you actually
+reason about delta u and you assign a value to
+delta u, then you can-- And that's a time-varying. Definitely. That's right. Yeah. So this seems reasonable. On the other hand,
+all of this was derived under the assumption
+of linear dynamics. A more interesting
+setting is the setting where you have a nonlinear
+dynamical system. So, how do you do tracking when
+now the dynamics are nonlinear? It turns out that we use
+essentially the same techniques we have just discussed. So specifically, let's assume
+that now our system dynamics are nonlinear. So xk plus 1 is
+equal to f of xk uk. Let's assume as before
+we're given a reference trajectory again computed
+through a direct method, for example through SCP. Now the question again is to
+find a sequence of controls u that bring your state
+trajectory and also control trajectory
+as close as possible to their nominal counterparts. On the other hand,
+though, now the dynamics are no longer linear. So we have that your
+system dynamics of A xk plus 1 equal of xk uK. And then you have that--
+your nominal trajectory which has to be a feasible
+trajectory satisfies xk plus 1 equal f of xk uk delta. Can we still reformulate
+the tracking problem in the deviation variables? Yes, if we apply
+the following trick. So xk plus 1 minus
+x bar k plus 1 is equal to f of x uk minus
+f of x bar k, u bar k. But now let's do
+the usual trick. So let's do a Taylor
+expansion, whereby we approximate f
+around its argument x and u evaluated
+at x bar and u bar. So if you do so,
+then we can write the f of xu as f
+of x bar k comma u bar k plus gradient
+of f with respect to x times xk minus x bar k plus
+gradient of f with respect to u. Multiply the uk minus u bar k. Jacobians. Yeah. So let's call these
+derivatives as Ak. Let's call these
+derivatives as Bk. So once we plug this
+formulation in here, what we get is xk
+plus 1 minus x bar k. So I'm just substituting in here
+the linear approximation of fx in view. So what we get-- this is equal to f x bar k comma
+u bar k plus Ak xk minus x bar k plus Bk uk minus u bar k
+minus f of x bar k, u bar k. So these two terms cancel out. We define as before
+the deviation variable as xk minus x bar k. So this is the deviation
+variable for x of k plus 1. This is the deviation
+variable for u. This is the deviation
+variable for x. [INAUDIBLE] When you sorry? So when you first [INAUDIBLE]
+somewhat true if [INAUDIBLE] That's right. But they're not [INAUDIBLE]. No. Yes. Well, so this is a
+tracking problem. So typically, you start very
+close to the initial condition that you used in order to
+get your nominal trajectory. And the idea of a
+tracking algorithm is actually to stay
+close to your tracking-- to your nominal trajectory. So in that sense,
+the problem is such that you want to stay close to
+that nominal trajectory, which means that the
+linearization typically is a good approximation
+because you're close enough. But it's true. There is always the danger that
+you are deviating a bit too much, in which case the
+linearization becomes useless. And this algorithm
+could become erratic. In practice, it
+works quite well. But yeah, it's a
+very valid point. But the main point here is that
+as you saw, if we just by this approximation that the
+dynamics can be linearized, we are back to
+the linear setting whereby the dynamics for our
+deviation variables are linear, which means that again, I
+can set up an auxiliary LQR problem with respect to the
+delta u and delta x variables, find the optimal delta
+u, and then backtrack the tracking algorithm-- the
+tracking control signal as u bar k plus delta uk. So once basically
+you do linearization, you're back again
+into the setup we had in the previous
+slide or linear dynamics. Something that I
+want to note here is that these Jacobians here
+are evaluated at xk uk, xk uk. You are linearizing essentially
+around the nominal state. You should be at time k,
+time 1 in this example, which essentially means that
+these Jacobians are actually time-dependent. The dependency
+stems from the fact that you are linearizing at
+different stages with respect to different points
+on the trajectory. Fortunately, LQR works for
+linear time-varying dynamics. So this is not a problem here. [INAUDIBLE] Yeah, yeah. Absolutely. If you had a feasible trajec-- but in reality, what
+happens is that you are, again, a robotic system. You're moving around
+in your environment. And new stuff happens,
+so you compute a new open-loop trajectory. So that's why in some settings,
+you cannot really pre-compute the linearized Jacobians. But if actually the environment
+is static, then absolutely, you can do that. You can do that. [INAUDIBLE] Yeah, that's a great question. So here, we are assuming
+that we know not just the trajectory in
+the state variables, but also in the
+control variables. So in that case, you
+have-- so first of all, for some of the algorithms
+that we have used, they give you the full
+state control pair. In other settings-- and
+that becomes a bit more problem-dependent-- if you
+are given a state trajectory, you can backtrack the controls
+that give rise to that state through the dynamics, for
+example, using techniques from differential flatness. So bottom line is either you
+use an algorithm that gives you the state-controlled
+pair, or somehow you have to backtrack
+the controls that give you that state trajectory. Otherwise, you cannot
+really use this formulation. OK. So that's actually quite useful. And again, note the
+very intuitive form of your tracking-controlled
+sequence. A feedforward term uses
+the nominal control that you would like to
+use, plus a term delta u that because of LQR is given
+by linear feedback on the state. So it's a closed-loop wrapper
+around your nominal trajectory. Very natural. So you have your
+nominal trajectory. Someone pushes you. And then you have a little
+bit of a control algorithm brings you back to
+where you want it to go. Let's go one step further. Consider now the nonlinear
+optimal control problem. And interestingly, let's
+now pose the question. Can we use LQR to compute an
+optimal open-loop trajectory? It's a bit weird
+because now we're talking about closed-loop
+control policies. So we are using techniques
+from closed-loop control to compute an optimal
+open-loop trajectory. So we'll see why that is
+a good idea in a second. But for now, the
+problem is as follows. We go back to our general
+nonlinear optimal control formulation. We want to find an optimal
+state control trajectory for it. Can we use LQR ideas
+to do so to derive a new methodology to
+compute trajectories for nonlinear systems? And the idea here is
+very similar to what we did for nonlinear tracking. But we did a little bit of
+twist in the interpretation. So specifically, let's
+assume that now we're given a feasible
+nominal trajectory. This could be any trajectory
+as long as it is feasible. Now the idea is not
+that we want to find a control that brings you closer
+to the nominal trajectory, but rather a control that
+deforms your nominal trajectory into a better trajectory. So we want to get away from
+the nominal trajectory, hoping to find a trajectory
+that has a lower cost. So you're given a trajectory
+here, x bar 0, x bar 1, x bar 2. So before-- say that for some
+reason you ended up at x1, you wanted to compute a control
+that was bringing you back to the nominal trajectory in
+terms of the variables delta x. Now what actually
+you want to do is to find controls that shift
+these waypoints away by quantity delta x1 and quantity
+delta x2 such that now you have a new
+trajectory with a cost c2 that when compared
+to cost c1 is lower. So basically, you want
+to perturb each waypoint in such a way that you get a
+new trajectory with lower cost. So then the question is,
+can we use LQR techniques to select these kind
+of perturbations in a principled way? Yeah. Question. So if your-- I guess I'm
+confused how you would get us into those lessons you want if
+you already had your nominal and assuming that-- But the nominal happens
+inside the optimal. So the nonlinear trajectory
+is a feasible trajectory with some cost c1,
+but I'm not making any claim of optimizing for it. Oh, perfect. So now I want to get to a
+new feasible trajectory, but hopefully with lower cost. So previously, you
+mentioned how we can use the previous
+methods to find an optimal trajectory and
+then the original idea for [INAUDIBLE]. So what situations in
+this case [INAUDIBLE] feasible nominal
+trajectory, but we know it's not optimal or something? So the question is, where
+is that nominal trajectory is coming from for
+tracking purposes? It might be coming
+from SCP, for example. Here, I'm going to derive
+a new method to come up with a nominal trajectory. And then you will
+use LQR to track it. So that's a little bit the
+confusing part that you shouldn't be tripped then. That's right. So for now, we are
+shifting gears. We're not talking
+about tracking. Now we're talking about
+trajectory optimization. So the idea here is
+very similar as before. We want to reason in terms
+of deviation variables. But now we want to pick
+these deviation variables not to drive a delta x to 0, but
+to drive delta x in such a way that we get the new
+waypoints that gives rise to a trajectory with lower cost. So the idea, as before, is
+to consider a linearization of your dynamics
+so that you still have linear dynamics
+with respect to your deviation variables
+delta x and delta u. But now, rather than setting up
+an auxiliary LQR problem where the goal is to drive delta x to
+0, you consider different cost. The dynamics are the same,
+but the cost is different. Specifically, what
+you do is you take-- you have the cost of
+your nominal trajectory c x bar u bar k. This is what-- OK. The cumulative cost would
+then be equal to c1. And then you have the cost of
+a general state control per uk. So then you can write
+c of xk plus delta xk and c of u [INAUDIBLE] in terms of the
+deviation variable only by just using a
+Taylor expansion up to second-order terms. So we are approximating the cost
+of a trajectory with respect to the nominal trajectory. Let me explain this a bit more. So the dynamics are
+already-- we already had the dynamics in terms
+of deviation variables through the linearization
+of the dynamics f. Now what I want to
+do is also to find an approximation for the
+cost in a way that can be used in a LQR-like setting. Specifically, the cost c
+xk uk is equal to c of xk plus delta xk comma uk plus
+delta uk with bars and bars. OK. Oops. Simply because remember
+that delta x is equal to x minus x
+bar, and delta u is equal to uk minus u bar k. So this step should be obvious. Now I do the approximation
+whereby c of x bar plus delta x
+u bar plus delta u is equal to c of
+x bar k, u bar k plus a derivative of c with
+respect to x times delta x plus derivative of cost with
+respect to u times delta u. So here, subscript
+x means that you are taking derivative of the
+cost function with respect to the x variables. Subscript u means
+that you are taking derivative of c with
+respect to the u variables. Double x means that we're taking
+twice derivatives with respect to the x variables. And x u, it means that we
+take cross derivatives first with respect to x and
+then with respect to u. Here, we're just doing a Taylor
+expansion of the function c x u around the x bar u
+bar up to second order. So then the idea is let's
+compute the deviation variables delta u in such a way that
+the pair delta u delta plus the second-order
+terms in such a way that the pair delta
+x delta u achieve an approximated cost that is
+lower than the nominal cost. So going back to
+this drawing here, essentially, we are considering
+approximation of our cost function that allow us to inform
+the direction along which we want to deform our trajectory. Does that make sense? Yeah. [INAUDIBLE] regularizing
+it so that-- or regulating it so that
+the delta becomes 0, right? Like the difference between
+the [INAUDIBLE] and the-- Quadratic. Quadratic. Yes. So this one here, it
+seems like intentionally making the deviation nonzero. So what's the parameter
+that you like [INAUDIBLE] 0? [INAUDIBLE] you don't
+want to [INAUDIBLE]. [INAUDIBLE] Well, remember that this is
+no longer the standard LQR. This is the generalized LQR when
+you also have a constant terms and you have the cross terms. So that's why the delta x here
+are not necessarily going to 0. If it was only this term
+here and this term here, then yes, the delta x would
+be picked to go to 0 because, of course, you are penalizing
+them quadratically. So the minimum will
+be when delta x is equal to 0, which introduces
+also another consideration. So before when we were setting
+up the auxiliary LQR problem for tracking purposes,
+you as a designer picked the penalty
+Q and the penalty R. Here, the penalty Q, the
+penalty R, as well as the other matrices, are
+derived from the approximation. So you say, who cares? Well, you do care because
+you want this problem to be well-conditioned. For example, you want to
+have a Q to be positive definite, which means that
+you may want to regularize some of these parameters. But we'll look at these tricks
+and considerations in a second. Yeah. So the idea that using just like
+the Taylor expansion to estimate with the new costs [INAUDIBLE]
+perturb the waypoint or reference-- That's right. Yeah. But you do so in such a way that
+the new cost is a quadratic. So then you can
+use LQR derivation to very quickly derive
+the solution for delta u. Yeah. So the cross term-- oh, no, never mind. I was going to ask why
+there wasn't two deltas. There is two deltas
+in the cost term. That's right. So [INAUDIBLE] up here
+and then [INAUDIBLE] Yeah, I see it. So then the idea--
+does this make sense? So now we have a cost that
+rather than encouraging the delta x to go to 0 and
+encouraging the delta x to be chosen in such
+a way that you get to trajectory to a lower cost. Delta x equals 0
+is not necessarily the minimum for this cost. Oh, yeah. OK. So then, what do you do? You linearize your dynamics. You quantize your cost. You run LQR with respect to the
+deviation variables delta u. And then you have a bunch of--
+you have a sequence of controls, so uk plus delta uk. What a delta uk's are the ones
+that are computed through LQR. So now what you do is you
+go back into your dynamics starting from an
+initial condition, and you propagate
+your dynamics forward to obtain the new trajectory. That becomes the new
+feasible trajectory that you use for your subsequent
+round of optimization. So that's why this algorithm is
+referred to as iterative LQR. You take a nominal
+trajectory in other dynamics, quadratize your costs, compute
+the optimal deviation variables delta u, do that
+for all the stages, then integrate the
+dynamics forward to also obtain the sequence
+of states corresponding to the delta u's that
+you have just computed. This is the trajectory that
+in general has a lower cost, and use that as a new
+trajectory around which you want to repeat this business. Now, of course,
+there are a bunch of approximations that are made
+here, so I'll discuss later when LQR actually may not work. But in general,
+is the idea clear? Similar to tracking, but
+just with the opposite twist. You want to deform your
+trajectory as opposed to go to your trajectory. Now, of course, to
+your point, once you have computed through iterations
+of this algorithm, a feasible trajectory that
+you're happy with, then you might set up an
+LQR tracking algorithm to robustify it. Yeah. So this reminds me of what we
+talked about gradient descent [INAUDIBLE] for how close you're
+getting with each step of this LQR-- No, not really, because
+of the approximations that we're making with
+respect to the dynamics, which brings essentially-- I'll get back to your
+question in two slides. So here, to iterate,
+iterative LQR essentially comprises two steps, backward
+pass and the forward pass. In the backward pass, we compute
+a locally linear dynamics, locally quadratic cost around
+the nominal trajectory. We solve the Riccati equation
+to compute the optimal deviation variables delta u. And then in the forward pass, we
+use the optimal control policy uk plus delta u in order to
+obtain the state sequence. Now, something that
+people sometimes get wrong is when you do the forward
+propagation of your dynamics, you don't use your
+linear approximations. You actually use
+your true dynamics xk plus 1 equal to f of xk uk. Since you know your dynamics
+and forward propagating dynamics is easy, there is no reason
+to use an approximation there. So you forward propagate
+with the exact dynamics. Oh, I have it here. Propagate full
+nonlinear dynamics f than the linear
+approximate dynamics. And iterate until convergence. Like, for example, as usual, the
+cost reduction after a few steps is insignificant, or
+the difference is in-- for example, in the
+state space, [INAUDIBLE] trajectories is insignificant. Then you stop. Or maybe you have
+a maximum amount of iterations as a budget. So going back to what you know
+from last week, of course, there are a lot of commonalities
+with respect to SCP. It's very similar. So you linearize the dynamics. And you can complexify your
+cost but with a few differences. So first of all, in SCP, you
+are using a convex solver to solve the problem. In LQR, you use the LQR
+equations that are almost-- I mean, they are
+actually analytical. So iLQR is easier to
+implement because you're just implementing Riccati
+equations and then inject some derivatives. With SCPs, it'd be
+a bit more complex because you also have to
+implement a convex programming solver. So this seems that--
+this seems to imply that LQR is better than SCP. SCP, though, is a
+bit more powerful. It's more powerful first,
+because it doesn't require necessarily a quadratic
+formulation of the cost and your approximations. It could just be a general
+convex approximation. But most importantly, SCP allows
+you to reason about the control constraints and
+state constraints as long as the problem's convex. In iLQR and LQR, there
+are no constraints. If you add constraints to
+your problem formulation, all the results are
+related to the Riccati equation don't hold anymore. So they are similar in spirit. They rely on successive
+approximations, but they're also a bit different
+in terms of complexity. SCPs are a bit more complex, but
+it's also a bit more general. It's also a bit more-- SCPs are also a bit more
+difficult to implement. You have to think
+about trust regions, as we discussed
+last week and so on. Now, historically, iLQR was one
+of the most popular algorithms because it's super easy to
+implement Riccati equations plus some linearizations. These days, convex
+programming solvers, embedded convex
+programming solvers, have become so powerful
+that even though you have to solve in a line
+optimization through iterations is not too bad. So SCP has also become a fairly
+popular direct optimization algorithm. Yeah. So you can really only
+use iLQR if you're not close to the limits
+on your control or the limits on your state,
+because otherwise, there's no reason that your iterations
+would go over the boundaries. Yep. That's right. Yeah. So [INAUDIBLE] to be
+a bit careful in terms of how you handle constraints. You can handle those
+constraints a little bit-- [INAUDIBLE] for example, you
+can add penalties into the cost. But you have to be careful. But you cannot handle the
+constraints explicitly as constraints. Yeah. So going back to LQR
+to be quick here, so there are a number of
+considerations that one has to consider to make iLQR work. First of all, as
+also your colleague mentioned, you have to make
+sure that the new state control stay close to
+the linearization point. Otherwise, all the
+approximations that we have made may not hold anymore. And actually, the
+trajectory that you compute after one
+iteration might even have larger cost, which brings
+us to the second bullet point. So when we roll out the
+policy forward in time, sometimes you want to
+detune the control such that you don't get it too
+far from the iteration-- from the trajectory was computed
+at a previous iteration. So you may do a little
+bit of line search in order to find the feedforward
+term that keeps you close to the previous trajectory. We need to design a
+termination criterion. We have already
+discussed about this. This is an iterative algorithm,
+a local optimization algorithm. There is no guarantee to
+get to an optimal solution. So a good initialization
+is critical. These days, a very powerful
+way of initializing these iterative
+solvers, SCP, iLQR, is, for example, to use
+data-driven techniques. So basically neural
+networks that have seen gazillions of
+optimal control problems. You just use the prediction
+from the neural network as a warm start to
+start these iterations. So you get the best
+of both worlds, the generality of
+data-driven control, but also the assurances
+of formal optimal control. Cost matrices may not
+be positive definite when you do your linearization
+and quadratization, so you may want to
+regularize them, for example, by adding a
+constant plus the identity in order to shift the spectrum. In general, there is a great
+collection of tips and tricks in the thesis of Yuval Tassa. And I refer you to Section 2.2.3
+if you had to implement an iLQR and you have a little bit
+of issues with tuning some of the parameters. Now, as a last topic-- and
+here will be quite quick-- I want to talk about
+the differential dynamic programming,
+which is essentially a slightly more powerful way of
+implementing iLQR-like ideas. At a high level what DDP
+is doing is the following. In iLQR, what we do is to
+locally approximate the dynamics of the system around
+the nominal trajectory and locally approximate
+the cost, again, around the nominal trajectory. But once you do
+that, then you're left with an LQR-like problem
+that you solve exactly using Riccati equations. In differential dynamic
+programming, what you do is to approximate directly
+the Bellman equation. Specifically, the idea of
+differential dynamic programming is as follows. So in iLQR, you
+approximate your problem, and then you run dynamic
+programming exactly. In DDP, you directly approximate
+the dynamic programming equations specifically. You remember from
+last time from-- yes. yes, last time-- that the
+optimal cost at stage k given state x of k is equal to
+the minimum over uk of xk uk plus Jk plus 1 of f of xk uk. So this is the Bellman. Is the Bellman equation, right? So this is equal to the
+minimum over uk plus delta uk. Remember that delta u
+is u minus u bar, where u bar is a nominal
+control trajectory, c of xk plus delta xk
+uk plus delta uk plus Jk plus 1 of f of xk plus delta
+xk comma uk plus delta uk. So let's define the right-hand
+side of the Bellman equation as a general function
+Q of xk plus delta xk. Sorry, this should be a
+bar, and this should be bar. And this should be bar. Comma u bar k plus delta uk. So this function Q is
+referred to as a Q function and will play a crucial
+role when we talk about the data-driven control. But for now, we
+don't care about it. So you see that this
+function is just a function of x
+bar plus delta x. And so this entire thing is a
+complicated function of x bar plus delta x and u
+bar plus delta u. Remember that in dynamic
+programming, Jk plus 1 has already been computed. So this is a known quantity. f, we know it. So we do know this function. We know how to take derivatives. So the idea of
+dynamic programming is to locally quadratically
+approximate the right-hand side of the Bellman equation. So minimum of a u bar-- so
+this is just a constant, right? It's your nominal control. Minimum a u bar plus
+delta u is equivalent of taking just the
+minimum over delta u. We're optimizing over
+the same set of numbers. So if you just
+then approximate Q of x bar [INAUDIBLE] delta x u
+bar plus delta u quadratically, now you're just solving
+quadratic problems with respect to the delta u's. X is given. x bar is given, so the
+only variable is delta u. So how do we solve-- we're just left with a problem
+of computing the optimal delta u that minimizes the quadratic
+approximation of the Q function. But it is super easy to do. You just take the
+derivative equal to 0. [INAUDIBLE] do you see
+what I'm doing here? So in our programming, we
+are moving backward in time. So this function is known. This function is known. So everything here is known. x is known because we are fixing
+it in the dynamic programming recursion. The only thing that
+you're optimizing over are really these
+delta u variables. Now what you do in this
+dynamic programming is to take this very
+complicated function and are approximated in Taylor
+series up to second order by using x bar and u bar
+as your reference point for your approximations so
+that now this optimization problem becomes a much easier
+problem whereby you want to find delta u's that
+optimize a quadratic cost, which is really the quadratic
+approximation, the Q function, which is written here. This is for the 10th time in
+this lecture a second-order approximation of a function. So how do I minimize this
+quadratic function with respect to u? I take the derivative
+and set it equal to 0. So the derivative of Q with
+respect to delta u is-- this term is a constant. This term is a constant. Here, we have a Q uk. This term is a constant. Here, we have a quadratic. So here, we have
+a plus Q. Remember that the subscript u means that
+this is a Jacobian with respect to u. Q u u comma k of delta u plus-- so this is a linear term. So we take the derivative
+also to delta u. So we get plus Q x
+uk times delta x. We set all of these equal to 0. And then we solve for the-- which is what we have here. And then we solve for
+the optimal delta u. And that's basically your new
+control uk plus delta uk star. So you plug this delta
+u back into the-- back into here. So what you get is a solution
+for Q in quadratic form, which means that now your optimal
+cost-to-go is also quadratic. And then you go
+one step backward. So basically, what you're
+doing in differential dynamic programming is to
+approximate the right-hand side of the Bellman equation by
+quadratizing the Q function, solving for the optimal
+delta u with respect to the quadratized
+version of the Q function. Get the optimal delta u. Plug it back into
+the cost function so that you have actually
+a quadratic cost-to-go. And then go one step backward. So here, I'm writing
+down all the derivatives of the Q function. Not too useful to remember. The only thing that I want
+to highlight here, just to draw a comparison
+with respect to iLQR, is that if you go through
+all the derivations, you'll see that there are
+second-order derivatives with respect to the dynamics. So essentially, differential
+dynamic programming is a second-order
+algorithm in the sense that it also uses second-order
+derivatives with respect to dynamics. While in LQR, you only compute
+the first-order derivatives of your dynamics. So this is an even more
+sophisticated algorithm. But in terms of-- intuition is relatively similar. So we cover quite a
+bit of material here. As I said, next
+week, we're going to cover the topic
+of stochastic DP. But to recap, so we
+have looked at how to use LQR in a number
+of settings that are relevant to optimal control. Tracking algorithms,
+very important. Make sure that you familiarize
+with that material. We also see-- we also
+saw how we can derive direct methods for
+optimal control by exploiting LQR results that
+led us to the iLQR trajectory optimization algorithm. And then we saw a different way
+of doing trajectory optimization that is still inspired
+by iLQR ideas, but is a bit
+different in the sense that you directly approximate
+the right-hand side of the Bellman equation. But results are very similar. You still get controls
+that are a feedforward term plus a linear feedback term. But, of course, the gains are
+going to be different here. Bottom line, make sure
+that you familiarize with iLQR and with
+nonlinear tracking with LQR. All right. So see you on Monday.

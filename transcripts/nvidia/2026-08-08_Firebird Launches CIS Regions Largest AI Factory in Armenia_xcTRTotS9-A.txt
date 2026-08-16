@@ -1,0 +1,18 @@
+Title: Firebird Launches CIS Region’s Largest AI Factory in Armenia
+Channel: NVIDIA
+Published: 2026-08-08
+URL: https://www.youtube.com/watch?v=xcTRTotS9-A
+------------------------------------------------------------
+Hello, Armenia. Hello, Kazakhstan. Prime Minister Pashinyan, Deputy Prime Minister Madiyev. Distinguished leaders and my friends at Firebird. Congratulations. Over the past 15 years, the advances in computing have made something extraordinary possible. Artificial intelligence. What was once a research curiosity is now one of the most useful technologies ever created, and it is being adopted faster than any technology in history. Across every field, from healthcare and scientific research to manufacturing, finance, transportation. and creative work. Doctors read medical scans and personalized treatments. Banks detect fraud and manage risk in real time. Manufacturers catch defects before they leave 
+the factory floor. Scientists discover new drugs and materials.
+And every company builds smarter software and agents that 
+reason, code, and act on their behalf. And this is only the beginning. AI will soon be pervasive, integrated into every application, every device, and every workflow. AI demand is now compute demand. Every query, every agent, and every reasoning step 
+generates tokens, and every token requires compute. Like electricity and internet before it, AI will become a new kind of infrastructure, generating intelligence for every digital application, for every company, 
+for every citizen. There will be excellent AI cloud services 
+like OpenAI and Anthropic available around the world. But intelligence, like energy,
+cannot simply be imported. Every company and every country must build its own AI. No nation can outsource all of its intelligence. Today, Armenia and Kazakhstan are building the infrastructure to create your intelligence at home. That is why it is such a great honor
+that you have selected Firebird and NVIDIA to build the AI infrastructure of your nations. This infrastructure will serve your researchers, your startups, your industries,
+and your governments. It will give the extraordinary builders of 
+Armenia and Kazakhstan the compute to create the next generation of AI and connect this region to the global AI economy. Over the next 12 months, Firebird plans 
+to bring 250 MW of NVIDIA AI infrastructure across Armenia and Kazakhstan. This will be a magnet, an opportunity to attract companies around the world to build and run their AI here. And it will be a catalyst, sparking 
+a new generation of startups built on the compute you now have at home. AI factories turn energy into intelligence. This is the infrastructure of the AI era. Congratulations to Firebird, Armenia, Kazakhstan and to everyone who made today possible. NVIDIA is proud to stand with you.
