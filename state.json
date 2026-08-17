@@ -102,5 +102,62 @@
       "transcript_file": "transcripts/TwoMinutePapers/2026-08-11_OpenAIs AI Agents Just Crossed A Line_JQ97GiDwPxc.txt",
       "status": "ok"
     }
+  },
+  "analyzed": {
+    "R4_fHzTo0IM": {
+      "analyzed_at": "2026-08-17T11:28:52Z",
+      "title": "Stanford AA203 Optimal and Learning-Based Control | Spring 2026 | Lecture 5: Computational Methods",
+      "channel": "Stanford Online"
+    },
+    "a1g9U_5zO54": {
+      "analyzed_at": "2026-08-17T11:28:52Z",
+      "title": "Stanford AA203 Optimal and Learning-Based Control | Spring 2026 | Lecture 18: RL Policy Optimization",
+      "channel": "Stanford Online"
+    },
+    "Fl5EjGhQjgs": {
+      "analyzed_at": "2026-08-17T11:28:52Z",
+      "title": "Stanford AA203 Optimal and Learning-Based Control | Spring 2026 | Lecture 10: Reachibility Analysis",
+      "channel": "Stanford Online"
+    },
+    "1YdgSwEtf_s": {
+      "analyzed_at": "2026-08-17T11:28:52Z",
+      "title": "AStanford AA203 Optimal and Learning-Based Control | Spring 2026 | Lecture 8: LQR-Style Algorithms",
+      "channel": "Stanford Online"
+    },
+    "xcTRTotS9-A": {
+      "analyzed_at": "2026-08-17T11:28:52Z",
+      "title": "Firebird Launches CIS Region\u2019s Largest AI Factory in Armenia",
+      "channel": "NVIDIA"
+    },
+    "EWlD1dy5lck": {
+      "analyzed_at": "2026-08-17T11:28:52Z",
+      "title": "NVIDIA interns brought their energy to teams across the company this summer",
+      "channel": "NVIDIA"
+    },
+    "Np0afRWtdp8": {
+      "analyzed_at": "2026-08-17T11:28:52Z",
+      "title": "Why AI Agents Need More Than One Model",
+      "channel": "NVIDIA"
+    },
+    "bm1BjOjS7sQ": {
+      "analyzed_at": "2026-08-17T11:28:52Z",
+      "title": "Another DeepSeek Moment Has Arrived",
+      "channel": "Two Minute Papers"
+    },
+    "ppQh4Tc9BmM": {
+      "analyzed_at": "2026-08-17T11:28:52Z",
+      "title": "The Billion Dollar AI Race Just Broke",
+      "channel": "Two Minute Papers"
+    },
+    "vO6SWG-jxvE": {
+      "analyzed_at": "2026-08-17T11:28:52Z",
+      "title": "DeepMind Just Changed How AI Sees The World",
+      "channel": "Two Minute Papers"
+    },
+    "JQ97GiDwPxc": {
+      "analyzed_at": "2026-08-17T11:28:52Z",
+      "title": "OpenAI\u2019s AI Agents Just Crossed A Line",
+      "channel": "Two Minute Papers"
+    }
   }
 }
