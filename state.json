@@ -101,6 +101,15 @@
       "url": "https://www.youtube.com/watch?v=JQ97GiDwPxc",
       "transcript_file": "transcripts/TwoMinutePapers/2026-08-11_OpenAIs AI Agents Just Crossed A Line_JQ97GiDwPxc.txt",
       "status": "ok"
+    },
+    "87DyyMV0kCY": {
+      "title": "YouTube video 87DyyMV0kCY",
+      "published": "2026-08-17",
+      "channel": "On-demand (YouTube)",
+      "url": "https://www.youtube.com/watch?v=87DyyMV0kCY",
+      "transcript_file": "transcripts/_ondemand/youtube/2026-08-17_87DyyMV0kCY.txt",
+      "status": "ok",
+      "source": "on_demand"
     }
   },
   "analyzed": {
@@ -158,6 +167,11 @@
       "analyzed_at": "2026-08-17T11:28:52Z",
       "title": "OpenAI\u2019s AI Agents Just Crossed A Line",
       "channel": "Two Minute Papers"
+    },
+    "87DyyMV0kCY": {
+      "analyzed_at": "2026-08-17T11:37:59Z",
+      "title": "YouTube video 87DyyMV0kCY",
+      "channel": "On-demand (YouTube)"
     }
   }
 }
