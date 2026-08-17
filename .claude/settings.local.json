@@ -3,6 +3,8 @@
     "allow": [
       "Bash(python fetch_videos.py)",
       "Bash(python build_digest.py:*)",
+      "Bash(python analyze_link.py:*)",
+      "Bash(python ledger.py:*)",
       "Bash(pip install -r requirements.txt)",
       "Bash(git add:*)",
       "Bash(git commit:*)",

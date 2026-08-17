@@ -22,7 +22,12 @@ name: ai-trends-pipeline
 on:
   schedule:
     - cron: "0 13 * * *"
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      link:
+        description: "Optional YouTube/X link(s) to summarize, space-separated. Blank = normal channel sweep."
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -65,8 +70,13 @@ jobs:
             echo "proxy credentials present"
           fi
 
+      # Skipped when a specific link was requested — sweeping every channel
+      # would bury the one thing that was actually asked for.
       - name: Fetch new transcripts
         id: fetch
+        # Explicit about the scheduled case rather than relying on `inputs`
+        # being empty-equal to '' when there is no dispatch payload.
+        if: github.event_name != 'workflow_dispatch' || inputs.link == ''
         env:
           WEBSHARE_PROXY_USERNAME: ${{ secrets.WEBSHARE_PROXY_USERNAME }}
           WEBSHARE_PROXY_PASSWORD: ${{ secrets.WEBSHARE_PROXY_PASSWORD }}
@@ -93,6 +103,26 @@ jobs:
           else
             echo "has_new=false" >> "$GITHUB_OUTPUT"
           fi
+
+      # A link supplied via Run workflow lands in the same ledger the scheduled
+      # sweep uses, so the summarizer below treats both identically.
+      - name: Fetch on-demand link(s)
+        if: github.event_name == 'workflow_dispatch' && inputs.link != ''
+        env:
+          WEBSHARE_PROXY_USERNAME: ${{ secrets.WEBSHARE_PROXY_USERNAME }}
+          WEBSHARE_PROXY_PASSWORD: ${{ secrets.WEBSHARE_PROXY_PASSWORD }}
+          WEBSHARE_API_KEY: ${{ secrets.WEBSHARE_API_KEY }}
+          WEBSHARE_ROTATE: ${{ vars.WEBSHARE_ROTATE || '1' }}
+          # Only needed to list a whole X profile; single posts work without it.
+          X_BEARER_TOKEN: ${{ secrets.X_BEARER_TOKEN }}
+          LINKS: ${{ inputs.link }}
+        run: |
+          set -o pipefail
+          # Split on whitespace into an array rather than letting the shell
+          # re-interpret the dispatch input, so a link containing shell
+          # metacharacters is passed to Python as data, not executed.
+          read -r -a LINK_ARGS <<< "$LINKS"
+          python analyze_link.py "${LINK_ARGS[@]}" | tee -a fetch_output.txt
 
       - name: Check API key secret shape (safe - prefix and length only)
         env:
@@ -128,18 +158,27 @@ jobs:
             financial pipeline — do not add market commentary, tickers, price
             levels, or investment framing of any kind.
 
-            1. Read ./fetch_output.txt. Then ALSO compare the files in
-               transcripts/ against the Coverage Log table in AI-TRENDS.md —
-               any transcript file not yet in the log counts as new. If there
-               are no new transcripts, make NO changes and stop; a quiet day is
-               a valid outcome and an empty diff is the correct result.
+            1. Run `python ledger.py pending --json`. That is the AUTHORITATIVE
+               list of what to analyze — every transcript on disk that has not
+               already been written into AI-TRENDS.md. Do NOT infer this by
+               reading the document or listing transcripts/ yourself; anything
+               absent from that command has already been analyzed and must not
+               be analyzed again. If it prints an empty list, make NO changes
+               and stop; a quiet day is a valid outcome and an empty diff is
+               the correct result. ./fetch_output.txt has this run's fetch log
+               if you need context on failures.
 
-            2. For EACH new transcript, read it and add an entry to
-               AI-TRENDS.md under a `## 📺 <Channel Name>` section (create the
-               section if it does not exist; newest entries first). Use a level-3
-               `### ` heading with the video title and date — the digest builder
-               detects new entries by looking for added `### ` lines, so this
-               level matters. Each entry gets:
+            2. For EACH pending item, read its `transcript_file` and add an
+               entry to AI-TRENDS.md under a `## 📺 <Channel Name>` section
+               (create the section if it does not exist; newest entries first).
+               Items whose channel begins "On-demand" were requested by the
+               user via a pasted link — put those under `## 📌 On-demand` and
+               lead with what was asked about. Note that on-demand X items
+               carry only the post TEXT, never a video's spoken content, and
+               say so in the entry rather than implying the video was watched.
+               Use a level-3 `### ` heading with the title and date — the digest
+               builder detects new entries by looking for added `### ` lines, so
+               this level matters. Each entry gets:
                  - the video link
                  - what was actually claimed or demonstrated, in specifics
                    (model names, versions, benchmark numbers, techniques, costs)
@@ -156,7 +195,13 @@ jobs:
             4. Add one Coverage Log row per video, and update the "Videos
                covered" count and "Last updated" date in the header.
 
-            5. Commit AI-TRENDS.md, state.json, channels.json (fetch_videos.py
+            5. Run `python ledger.py mark <video_id> [<video_id> ...]` with the
+               `video_id` of EVERY item you just wrote an entry for. This is
+               what stops them being analyzed again on the next run, so it is
+               not optional — if you wrote an entry, mark it. Mark only what you
+               actually wrote.
+
+            6. Commit AI-TRENDS.md, state.json, channels.json (fetch_videos.py
                may have cached newly resolved channel IDs there) and any new
                transcripts/ files with a concise message, then push to the
                branch this run was launched from —

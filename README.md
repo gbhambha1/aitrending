@@ -17,8 +17,8 @@ Each run:
 
 1. `fetch_videos.py` — resolves channel IDs, then for each tracked channel takes the **5 most-viewed
    videos published in the last 30 days** and pulls any transcripts it doesn't already have.
-2. **Claude** — summarizes any new videos into `AI-TRENDS.md` and rewrites the **Latest themes**
-   section.
+2. **Claude** — summarizes anything `ledger.py pending` reports into `AI-TRENDS.md`, rewrites the
+   **Latest themes** section, and marks each item analyzed so it is never summarized twice.
 3. Commits and pushes `AI-TRENDS.md`, `state.json`, `channels.json` and new transcripts.
 4. **Emails you the digest** — but only when something new actually landed.
 
@@ -27,6 +27,53 @@ If any step fails, you get a **failure alert email** instead, with a link to the
 There is no DST gate and no fixed local time to hit — unlike the financial pipeline, nothing here
 keys off a market close, so the exact minute doesn't matter and the schedule never needs a seasonal
 edit.
+
+## 📌 Summarizing a specific link, on demand
+
+Besides the scheduled sweep, you can hand it a single thing to summarize. **Actions →
+ai-trends-pipeline → Run workflow**, and paste into the **link** box (space-separated for several):
+
+| Link | Behaviour |
+|---|---|
+| `youtube.com/watch?v=ID`, `youtu.be/ID`, `/shorts/ID`, `/live/ID` | Fetches that video's transcript |
+| `youtube.com/@handle`, `/channel/UC...` | Resolves the channel and takes its top recent videos — a one-off sweep without adding it to `channels.json` |
+| `x.com/user/status/ID` | Fetches the post text |
+| `x.com/user` | Lists that profile's recent posts — **needs an `X_BEARER_TOKEN` secret** |
+
+Filling in the link **skips** the channel sweep for that run, so the thing you asked about isn't
+buried. The source lands in `transcripts/_ondemand/` and enters the same ledger, so the normal
+Claude step writes the synopsis under an **On-demand** heading in `AI-TRENDS.md` and emails it —
+there is no second summarizing path to keep in sync.
+
+Locally: `python analyze_link.py <url> [<url> ...]`.
+
+> ⚠️ **X has no transcripts.** For an X post you get the post **text** only, via the public oEmbed
+> endpoint (no auth needed). If the post is a video, its spoken content is *not* included — that
+> would require downloading media and running speech-to-text, which this pipeline deliberately does
+> not do. Synopses of X items say so rather than implying the video was watched.
+
+## 🗂️ The analyzed ledger — nothing is summarized twice
+
+`state.json` carries two separate lists:
+
+| Ledger | Meaning | Prevents |
+|---|---|---|
+| `processed` | every video the fetcher has seen | re-downloading |
+| `analyzed` | every video written into `AI-TRENDS.md` | re-summarizing |
+
+They're deliberately distinct: a rate-limited or time-capped run can fetch a transcript and leave it
+to be summarized on a later run. `ledger.py` is the only interface:
+
+```bash
+python ledger.py status            # counts
+python ledger.py pending           # transcripts awaiting analysis
+python ledger.py pending --json    # same, with titles and metadata
+python ledger.py mark <video_id>   # record as analyzed
+```
+
+The summarizer is instructed to take its worklist from `ledger.py pending` and to mark each item it
+writes — *not* to infer what's new by reading the document. Parsing prose was the fragile part: a
+reworded heading would silently produce a duplicate entry.
 
 ## 🌐 The IP problem — why this repo uses a proxy
 
@@ -132,6 +179,7 @@ Settings → Secrets and variables → Actions → **New repository secret**
 | `WEBSHARE_PROXY_USERNAME` | Either this pair… | Webshare **Residential** proxy username (Proxy → Settings) |
 | `WEBSHARE_PROXY_PASSWORD` | …or the key below | Webshare Residential proxy password |
 | `WEBSHARE_API_KEY` | …or this alone | Webshare API key — exchanged for the proxy credentials at startup |
+| `X_BEARER_TOKEN` | Optional | Only to list a whole X **profile**; single X posts need no token |
 
 Secrets do **not** carry over from other repositories — even if the values are identical to
 `ytstock`'s, they must be added here separately.
@@ -227,6 +275,8 @@ From a home connection you do **not** need the proxy — the block only affects 
 |---|---|
 | `AI-TRENDS.md` | The living document — themes, per-video summaries, coverage log |
 | `fetch_videos.py` | Resolves channel IDs and pulls new videos/transcripts |
+| `analyze_link.py` | On-demand: fetches a YouTube or X link you supply |
+| `ledger.py` | Tracks which videos have been analyzed, so none is summarized twice |
 | `build_digest.py` | Builds the email body from `AI-TRENDS.md` + git history; exits 2 when nothing is new |
 | `send_email.py` | Sends it via Gmail SMTP |
 | `channels.json` | Tracked channels (handles; IDs auto-resolved) |
