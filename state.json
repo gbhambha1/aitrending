@@ -110,6 +110,78 @@
       "transcript_file": "transcripts/_ondemand/youtube/2026-08-17_87DyyMV0kCY.txt",
       "status": "ok",
       "source": "on_demand"
+    },
+    "ZXMThMHFD_w": {
+      "title": "Stanford AA203 Optimal and Learning-Based Control | Spring 2026 | Lecture 19: Model-Based RL",
+      "published": "2026-08-13",
+      "channel": "Stanford Online",
+      "url": "https://www.youtube.com/watch?v=ZXMThMHFD_w",
+      "transcript_file": "transcripts/stanfordonline/2026-08-13_Stanford AA203 Optimal and Learning-Based Control  Spring 2026  Lecture 19 Model_ZXMThMHFD_w.txt",
+      "status": "ok"
+    },
+    "Xj-QdEUxJkE": {
+      "title": "Kimi K3 Just Broke The Economics Of AI",
+      "published": "2026-07-29",
+      "channel": "Two Minute Papers",
+      "url": "https://www.youtube.com/watch?v=Xj-QdEUxJkE",
+      "transcript_file": "transcripts/TwoMinutePapers/2026-07-29_Kimi K3 Just Broke The Economics Of AI_Xj-QdEUxJkE.txt",
+      "status": "ok"
+    },
+    "wzY2fV4Mp3U": {
+      "title": "GPT-6 Goes Rogue? The HuggingFace Incident, Sans Hype",
+      "published": "2026-07-22",
+      "channel": "AI Explained",
+      "url": "https://www.youtube.com/watch?v=wzY2fV4Mp3U",
+      "transcript_file": "transcripts/aiexplained-official/2026-07-22_GPT-6 Goes Rogue The HuggingFace Incident Sans Hype_wzY2fV4Mp3U.txt",
+      "status": "ok"
+    },
+    "xGzseSSStnw": {
+      "title": "AI is getting a little out of control",
+      "published": "2026-08-06",
+      "channel": "AI Explained",
+      "url": "https://www.youtube.com/watch?v=xGzseSSStnw",
+      "transcript_file": "transcripts/aiexplained-official/2026-08-06_AI is getting a little out of control_xGzseSSStnw.txt",
+      "status": "ok"
+    },
+    "YP73B9D20V4": {
+      "title": "Open-weight AI just hit 2.8 trillion parameters\u2026",
+      "published": "2026-07-22",
+      "channel": "Fireship",
+      "url": "https://www.youtube.com/watch?v=YP73B9D20V4",
+      "transcript_file": "transcripts/fireship/2026-07-22_Open-weight AI just hit 28 trillion parameters_YP73B9D20V4.txt",
+      "status": "ok"
+    },
+    "aB5LGrHISqY": {
+      "title": "I spent 3 days at MIT... the robot hype is worse than you think",
+      "published": "2026-08-11",
+      "channel": "Fireship",
+      "url": "https://www.youtube.com/watch?v=aB5LGrHISqY",
+      "transcript_file": "transcripts/fireship/2026-08-11_I spent 3 days at MIT the robot hype is worse than you think_aB5LGrHISqY.txt",
+      "status": "ok"
+    },
+    "KOpTWx1Eou4": {
+      "title": "The most interesting \"hack\" in history...",
+      "published": "2026-07-23",
+      "channel": "Fireship",
+      "url": "https://www.youtube.com/watch?v=KOpTWx1Eou4",
+      "transcript_file": "transcripts/fireship/2026-07-23_The most interesting hack in history_KOpTWx1Eou4.txt",
+      "status": "ok"
+    },
+    "M51asSwRLxA": {
+      "title": "This $12 billion startup finally shipped something...",
+      "published": "2026-07-20",
+      "channel": "Fireship",
+      "url": "https://www.youtube.com/watch?v=M51asSwRLxA",
+      "transcript_file": "transcripts/fireship/2026-07-20_This 12 billion startup finally shipped something_M51asSwRLxA.txt",
+      "status": "ok"
+    },
+    "jxGJT1weu4w": {
+      "title": "Did Anthropic just kill the indie hacker...?",
+      "published": "2026-07-29",
+      "channel": "Fireship",
+      "url": "https://www.youtube.com/watch?v=jxGJT1weu4w",
+      "transcript_file": "transcripts/fireship/2026-07-29_Did Anthropic just kill the indie hacker_jxGJT1weu4w.txt",
+      "status": "ok"
     }
   },
   "analyzed": {
@@ -172,6 +244,51 @@
       "analyzed_at": "2026-08-17T11:37:59Z",
       "title": "YouTube video 87DyyMV0kCY",
       "channel": "On-demand (YouTube)"
+    },
+    "wzY2fV4Mp3U": {
+      "analyzed_at": "2026-08-17T13:43:15Z",
+      "title": "GPT-6 Goes Rogue? The HuggingFace Incident, Sans Hype",
+      "channel": "AI Explained"
+    },
+    "xGzseSSStnw": {
+      "analyzed_at": "2026-08-17T13:43:15Z",
+      "title": "AI is getting a little out of control",
+      "channel": "AI Explained"
+    },
+    "M51asSwRLxA": {
+      "analyzed_at": "2026-08-17T13:43:15Z",
+      "title": "This $12 billion startup finally shipped something...",
+      "channel": "Fireship"
+    },
+    "YP73B9D20V4": {
+      "analyzed_at": "2026-08-17T13:43:15Z",
+      "title": "Open-weight AI just hit 2.8 trillion parameters\u2026",
+      "channel": "Fireship"
+    },
+    "KOpTWx1Eou4": {
+      "analyzed_at": "2026-08-17T13:43:15Z",
+      "title": "The most interesting \"hack\" in history...",
+      "channel": "Fireship"
+    },
+    "jxGJT1weu4w": {
+      "analyzed_at": "2026-08-17T13:43:15Z",
+      "title": "Did Anthropic just kill the indie hacker...?",
+      "channel": "Fireship"
+    },
+    "aB5LGrHISqY": {
+      "analyzed_at": "2026-08-17T13:43:15Z",
+      "title": "I spent 3 days at MIT... the robot hype is worse than you think",
+      "channel": "Fireship"
+    },
+    "ZXMThMHFD_w": {
+      "analyzed_at": "2026-08-17T13:43:15Z",
+      "title": "Stanford AA203 Optimal and Learning-Based Control | Spring 2026 | Lecture 19: Model-Based RL",
+      "channel": "Stanford Online"
+    },
+    "Xj-QdEUxJkE": {
+      "analyzed_at": "2026-08-17T13:43:15Z",
+      "title": "Kimi K3 Just Broke The Economics Of AI",
+      "channel": "Two Minute Papers"
     }
   }
 }
