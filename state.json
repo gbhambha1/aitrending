@@ -182,6 +182,30 @@
       "url": "https://www.youtube.com/watch?v=jxGJT1weu4w",
       "transcript_file": "transcripts/fireship/2026-07-29_Did Anthropic just kill the indie hacker_jxGJT1weu4w.txt",
       "status": "ok"
+    },
+    "udHX5Auj7ik": {
+      "title": "Stanford AA203 Optimal and Learning-Based Control | Spring 2026 | Lecture 15: Imitation Learning",
+      "published": "2026-08-13",
+      "channel": "Stanford Online",
+      "url": "https://www.youtube.com/watch?v=udHX5Auj7ik",
+      "transcript_file": "transcripts/stanfordonline/2026-08-13_Stanford AA203 Optimal and Learning-Based Control  Spring 2026  Lecture 15 Imita_udHX5Auj7ik.txt",
+      "status": "ok"
+    },
+    "WCRNR1Ve9s0": {
+      "title": "Debugging with a Local Agent While You Get Coffee, Powered by NVIDIA RTX Spark",
+      "published": "2026-08-20",
+      "channel": "NVIDIA",
+      "url": "https://www.youtube.com/watch?v=WCRNR1Ve9s0",
+      "transcript_file": "transcripts/nvidia/2026-08-20_Debugging with a Local Agent While You Get Coffee Powered by NVIDIA RTX Spark_WCRNR1Ve9s0.txt",
+      "status": "ok"
+    },
+    "kyYepbhe1g8": {
+      "title": "DeepSeek Just Made Closed AI Look Ridiculous",
+      "published": "2026-08-19",
+      "channel": "Two Minute Papers",
+      "url": "https://www.youtube.com/watch?v=kyYepbhe1g8",
+      "transcript_file": "transcripts/TwoMinutePapers/2026-08-19_DeepSeek Just Made Closed AI Look Ridiculous_kyYepbhe1g8.txt",
+      "status": "ok"
     }
   },
   "analyzed": {
@@ -288,6 +312,21 @@
     "Xj-QdEUxJkE": {
       "analyzed_at": "2026-08-17T13:43:15Z",
       "title": "Kimi K3 Just Broke The Economics Of AI",
+      "channel": "Two Minute Papers"
+    },
+    "WCRNR1Ve9s0": {
+      "analyzed_at": "2026-08-21T13:24:19Z",
+      "title": "Debugging with a Local Agent While You Get Coffee, Powered by NVIDIA RTX Spark",
+      "channel": "NVIDIA"
+    },
+    "udHX5Auj7ik": {
+      "analyzed_at": "2026-08-21T13:24:19Z",
+      "title": "Stanford AA203 Optimal and Learning-Based Control | Spring 2026 | Lecture 15: Imitation Learning",
+      "channel": "Stanford Online"
+    },
+    "kyYepbhe1g8": {
+      "analyzed_at": "2026-08-21T13:24:19Z",
+      "title": "DeepSeek Just Made Closed AI Look Ridiculous",
       "channel": "Two Minute Papers"
     }
   }
