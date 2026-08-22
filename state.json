@@ -206,6 +206,22 @@
       "url": "https://www.youtube.com/watch?v=kyYepbhe1g8",
       "transcript_file": "transcripts/TwoMinutePapers/2026-08-19_DeepSeek Just Made Closed AI Look Ridiculous_kyYepbhe1g8.txt",
       "status": "ok"
+    },
+    "xBByvFrqmWU": {
+      "title": "DeepSeek is back... and Silicon Valley is terrified",
+      "published": "2026-08-20",
+      "channel": "Fireship",
+      "url": "https://www.youtube.com/watch?v=xBByvFrqmWU",
+      "transcript_file": "transcripts/fireship/2026-08-20_DeepSeek is back and Silicon Valley is terrified_xBByvFrqmWU.txt",
+      "status": "ok"
+    },
+    "E7la7-dtfVM": {
+      "title": "This new startup can query anywhere you've been...",
+      "published": "2026-08-14",
+      "channel": "Fireship",
+      "url": "https://www.youtube.com/watch?v=E7la7-dtfVM",
+      "transcript_file": "transcripts/fireship/2026-08-14_This new startup can query anywhere youve been_E7la7-dtfVM.txt",
+      "status": "ok"
     }
   },
   "analyzed": {
@@ -328,6 +344,16 @@
       "analyzed_at": "2026-08-21T13:24:19Z",
       "title": "DeepSeek Just Made Closed AI Look Ridiculous",
       "channel": "Two Minute Papers"
+    },
+    "E7la7-dtfVM": {
+      "analyzed_at": "2026-08-22T13:15:30Z",
+      "title": "This new startup can query anywhere you've been...",
+      "channel": "Fireship"
+    },
+    "xBByvFrqmWU": {
+      "analyzed_at": "2026-08-22T13:15:30Z",
+      "title": "DeepSeek is back... and Silicon Valley is terrified",
+      "channel": "Fireship"
     }
   }
 }
