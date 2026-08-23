@@ -8,9 +8,9 @@
 > document. Benchmark numbers, release dates and capability claims made on YouTube are frequently
 > wrong, early, or promotional — treat them as leads to verify, not as facts.
 
-**Last updated:** 2026-08-22
+**Last updated:** 2026-08-23
 **Channels tracked:** see [`channels.json`](channels.json)
-**Videos covered:** 26
+**Videos covered:** 27
 
 ---
 
@@ -77,6 +77,31 @@ is a reminder that deployed 2017-vintage ML plus a permissive data-sharing defau
 outcome, and none of the abuse required a capable model. The counter-effort is also unglamorous:
 **DeFlock**, an OpenStreetMap-based open dataset that has mapped tens of thousands of camera locations,
 whose author answered Flock's cease-and-desist with "no".
+
+**This run's only new item contains no AI at all, and it is the sharpest illustration in the document of
+the failure mode every agent-security entry here is circling: the wrong implementation getting selected
+silently.** Fireship's post-mortem on the **Coldcard** hardware wallet describes firmware that shipped a
+custom random-number generator alongside **MicroPython's** basic built-in one. Both exposed **a function
+of the same name**; the crypto library picked between them with an **`if not defined` check**; the vendor
+had "disabled" the weak one by **setting a flag to zero** — which is *defined*, so the check passed and
+the weak generator won. On bare metal it had no entropy source, seeding instead from **the chip serial
+number and a timer**, both deterministic. A key space specified at **128 bits** was in practice small
+enough to enumerate, and from **July 30** attackers derived keys for **thousands of addresses** without
+malware, phishing or any interaction with a victim. The defect was live for **five years** and produced
+no symptom, because a bad random number looks exactly like a good one. Two things make this worth the
+space in an AI document. First, it is the counter-example to the assumption running through every other
+entry that danger scales with model capability: there was no model here, no autonomy, no emergence —
+just a name collision and a truthy zero. Second, the mechanism that failed is precisely the mechanism
+this document spent the last run celebrating. DeepSeek's harness is sold on the promise that the model
+adapter, the tools, the UI and **the sandbox** are swappable "with one line of YAML" — a plugin system's
+entire job is resolving a name to an implementation, and Coldcard is what it looks like when that
+resolution goes wrong quietly in a security-critical path. The recovery story reinforces the same point
+about boundaries over cleverness: because keys cannot be rotated, escaping required an on-chain move that
+the attacker could observe in the **public mempool** and outbid, so the workaround was to route the
+rescue transaction **directly to a mining pool** — abandoning the decentralised path to get a
+transaction executed unobserved. Caveat this heavily: no code, commit or advisory appears on screen, the
+figures move within the video itself, and the segment ends in a paid ad for the AI coding platform
+**Lovable**, whose demo includes the agent getting stuck in a loop on a database-policy bug.
 
 **Underneath the news, the standing claim is still that the frontier moved without the architecture
 moving.** Two
@@ -233,6 +258,20 @@ the whole Artifactory chain beginning from agents having write access nobody int
 are not in dialogue and the joke shows Fireship sees the risk. But the corpus now contains a marketed
 architecture whose selling point is user-replaceable containment, and a first-party incident report
 whose only durable defence is containment. Nobody proposes a signed-plugin or trusted-sandbox model.
+
+**The same channel supplies the empirical case against name-based implementation swapping, fifteen days
+earlier, and does not connect it.** Fireship's Coldcard post-mortem (2026-08-05) describes two
+same-named random-number generators, a build flag that was `0` rather than undefined, and an
+`if not defined` check that consequently selected the weak implementation for five silent years.
+Fireship's DeepSeek harness video (2026-08-20) sells swapping the model adapter, tools, UI and **sandbox**
+"with one line of YAML" as the architecture's principal virtue. These are the same operation — bind a
+name to an implementation at build or config time — evaluated in opposite directions by one presenter
+within one month. The Coldcard case adds the detail the harness enthusiasm lacks: the failure was not
+that someone chose a bad plugin, it was that **nobody knew a choice had been made**, and the output of a
+mis-resolved security primitive is indistinguishable from a correct one under inspection. Neither video
+mentions the other and neither is claiming a general lesson; this pairing is this document's inference.
+It does, however, give the "signed plugin / attested sandbox" gap named above a concrete precedent
+rather than a hypothetical one.
 
 **The DeepSeek price rise now has two independent sources and neither channel checked its own
 arithmetic.** Two Minute Papers reported a **2.5×–5×** increase in DeepSeek's hosted API pricing
@@ -976,6 +1015,55 @@ inference pipeline and what aggregating its output enables.
   **Unitree Go1** named at $13,500 is a quadruped, not the humanoid the surrounding argument implies, so
   treat the product/price pairing as unreliable. Gemini Robotics 2 capabilities come entirely from
   Google's own demo reel, which is exactly the kind of source the video's thesis says to distrust.
+
+### The safest way to store Bitcoin was just hacked... — 2026-08-05
+
+[Watch](https://www.youtube.com/watch?v=2X2V3xv_jik)
+
+Not an AI video: a firmware/entropy post-mortem, included because the failure mode — a build flag that
+silently selected the wrong implementation and went unnoticed for five years — is the same class of
+defect this document keeps flagging in fast-shipped, machine-assisted code, and because the sponsor
+segment is an AI-tooling ad with its own claims. Summarised for the engineering content only; the
+financial dimension of the incident is out of scope for this repo.
+
+- **The bug, as described.** Coinkite's **Coldcard** air-gapped hardware wallet runs firmware on
+  **MicroPython**, which ships its own basic pseudo-random number generator. Coinkite wrote a stronger
+  generator of its own and believed it had disabled MicroPython's by **setting a configuration flag to
+  zero**. Both generators exposed **a function with the same name**, and the crypto library chose between
+  them with an **`if not defined` check** — which passed, because the flag *was* defined, merely to `0`.
+  Every seed phrase was therefore produced by the fallback generator, for **five years**, with no
+  outward symptom.
+- **Why the fallback was catastrophic rather than merely weak.** On bare metal there is no OS entropy
+  source, so per the presenter MicroPython's generator seeds itself from **the chip's serial number and a
+  timer** — both deterministic. A 12-word seed phrase is supposed to carry **128 bits of entropy**; the
+  realised keyspace was small enough to enumerate by looping over serial-number and timer values, turning
+  an infeasible search into an exhaustive one.
+- **Exploitation timeline as stated.** From **July 30, 2026**: a first attacker drained **over 1,000 BTC
+  from nearly 1,200 addresses in under an hour**, largest balances first; two further waves over the
+  weekend brought the total to **~1,800 BTC across more than 7,000 addresses**. No malware, no phishing —
+  key derivation alone.
+- **Why a patch could not fix it, and the race that followed.** Keys cannot be rotated in place, so the
+  only remedy is generating a fresh seed and moving funds in an on-chain transaction — which sits in the
+  **public mempool** where the attacker, holding the same keys, can watch for it and broadcast a
+  competing transaction with a higher fee. The workaround described is to **bypass the public mempool and
+  submit the rescue transaction directly to a mining pool**, which the presenter notes means the recovery
+  path for a trustless system routes through a single centralised intermediary. Unsold inventory shipped
+  with the same firmware, so shipments were halted.
+- **Sponsor segment (AI content).** **Lovable**: the presenter builds an app on its AI development
+  platform, describing a **plan mode** that maps the flow for review before code is written, generated
+  auth, payments and a managed Postgres on **Lovable Cloud**, an **MCP server** exposed to Claude Code for
+  live queries, and — stated openly — the agent **getting stuck in a loop on a database-policy bug**,
+  resolved by returning to plan mode. Claim of **over 50 million projects** built on the platform.
+- **Caveats:** **Sponsored** — Lovable, with an affiliate/free-trial link; the 50M-projects figure and
+  every capability described are the advertiser's own, demonstrated in one unaudited build, and the
+  "it got stuck, then fixed itself" anecdote is a sponsor read, not a test. The root-cause explanation is
+  a plain-language reconstruction with **no code, commit, disclosure or advisory shown on screen**, and no
+  named source for it; the flag name, the `if not defined` check and the serial-number/timer seeding are
+  as narrated. Loss totals, address counts and timings are asserted without a citation and shifted within
+  the video itself (**"over 1,600" in the intro versus "nearly 1,800" in the body**), so treat them as
+  approximate. Attacker attribution, the count of distinct attack waves, and the claim that unsold stock
+  all carried the broken build are unverified here. Comedic exaggeration throughout is the channel's
+  register, not reporting.
 
 ### Did Anthropic just kill the indie hacker...? — 2026-07-29
 
@@ -1873,6 +1961,7 @@ One row per video ingested. The pipeline appends here and updates the "Videos co
 | 2026-08-06 | AI Explained | [AI is getting a little out of control](https://www.youtube.com/watch?v=xGzseSSStnw) | 2026-08-17 |
 | 2026-08-07 | Two Minute Papers | [DeepMind Just Changed How AI Sees The World](https://www.youtube.com/watch?v=vO6SWG-jxvE) | 2026-08-16 |
 | 2026-08-05 | Two Minute Papers | [The Billion Dollar AI Race Just Broke](https://www.youtube.com/watch?v=ppQh4Tc9BmM) | 2026-08-16 |
+| 2026-08-05 | Fireship | [The safest way to store Bitcoin was just hacked...](https://www.youtube.com/watch?v=2X2V3xv_jik) | 2026-08-23 |
 | 2026-08-04 | NVIDIA | [Why AI Agents Need More Than One Model](https://www.youtube.com/watch?v=Np0afRWtdp8) | 2026-08-16 |
 | 2026-08-03 | Two Minute Papers | [Another DeepSeek Moment Has Arrived](https://www.youtube.com/watch?v=bm1BjOjS7sQ) | 2026-08-16 |
 | 2026-07-29 | Fireship | [Did Anthropic just kill the indie hacker...?](https://www.youtube.com/watch?v=jxGJT1weu4w) | 2026-08-17 |

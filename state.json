@@ -222,6 +222,14 @@
       "url": "https://www.youtube.com/watch?v=E7la7-dtfVM",
       "transcript_file": "transcripts/fireship/2026-08-14_This new startup can query anywhere youve been_E7la7-dtfVM.txt",
       "status": "ok"
+    },
+    "2X2V3xv_jik": {
+      "title": "The safest way to store Bitcoin was just hacked...",
+      "published": "2026-08-05",
+      "channel": "Fireship",
+      "url": "https://www.youtube.com/watch?v=2X2V3xv_jik",
+      "transcript_file": "transcripts/fireship/2026-08-05_The safest way to store Bitcoin was just hacked_2X2V3xv_jik.txt",
+      "status": "ok"
     }
   },
   "analyzed": {
@@ -353,6 +361,11 @@
     "xBByvFrqmWU": {
       "analyzed_at": "2026-08-22T13:15:30Z",
       "title": "DeepSeek is back... and Silicon Valley is terrified",
+      "channel": "Fireship"
+    },
+    "2X2V3xv_jik": {
+      "analyzed_at": "2026-08-23T13:15:43Z",
+      "title": "The safest way to store Bitcoin was just hacked...",
       "channel": "Fireship"
     }
   }
