@@ -230,6 +230,14 @@
       "url": "https://www.youtube.com/watch?v=2X2V3xv_jik",
       "transcript_file": "transcripts/fireship/2026-08-05_The safest way to store Bitcoin was just hacked_2X2V3xv_jik.txt",
       "status": "ok"
+    },
+    "ksRiHHCXfOM": {
+      "title": "Overview: Stanford CME295 Transformers and Large Language Models",
+      "published": "2026-08-25",
+      "channel": "Stanford Online",
+      "url": "https://www.youtube.com/watch?v=ksRiHHCXfOM",
+      "transcript_file": "transcripts/stanfordonline/2026-08-25_Overview Stanford CME295 Transformers and Large Language Models_ksRiHHCXfOM.txt",
+      "status": "ok"
     }
   },
   "analyzed": {
@@ -367,6 +375,11 @@
       "analyzed_at": "2026-08-23T13:15:43Z",
       "title": "The safest way to store Bitcoin was just hacked...",
       "channel": "Fireship"
+    },
+    "ksRiHHCXfOM": {
+      "analyzed_at": "2026-08-26T13:23:21Z",
+      "title": "Overview: Stanford CME295 Transformers and Large Language Models",
+      "channel": "Stanford Online"
     }
   }
 }

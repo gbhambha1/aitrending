@@ -8,9 +8,9 @@
 > document. Benchmark numbers, release dates and capability claims made on YouTube are frequently
 > wrong, early, or promotional — treat them as leads to verify, not as facts.
 
-**Last updated:** 2026-08-23
+**Last updated:** 2026-08-26
 **Channels tracked:** see [`channels.json`](channels.json)
-**Videos covered:** 27
+**Videos covered:** 28
 
 ---
 
@@ -31,6 +31,29 @@ sceptical side, the same talk describes cyber-capability *evaluations* as the di
 intrusion into OpenAI's own infrastructure and into Hugging Face's — so "our cyber evals got scary"
 is a claim about the exact activity that has already gone wrong once. Neither reading is confirmed.
 The thing to watch is whether the pause outlives two weeks.
+
+**This run's only new material is a 30-second course advert, and the only thing in it is a syllabus —
+but the syllabus is the story.** Stanford's CME295 (Transformers and Large Language Models) posted a
+trailer in which the two instructors name four topics that "have made a lot of progress in the past
+year": **agents, harness engineering, diffusion LLMs, and on-policy distillation**. There is no
+technical content, no number and no demo — it is marketing for a paid course, and the claim that these
+areas progressed is an unsupported assertion by people with an enrolment interest. What makes it worth
+reporting is that two of the four are terms this document has so far only ever seen in vendor framing.
+**"Harness engineering"** is the exact thing DeepSeek shipped commercially instead of a model — the
+argument that the scaffolding around a model is its own engineering discipline — and a university
+putting it on a syllabus is weak but independent evidence that the framing has outlived the launch that
+produced it. **"On-policy distillation"** is sharper still, because it names the answer to this
+document's longest-running open objection. The standing tension here is that Two Minute Papers credits
+DeepSeek 4 Pro's entire improvement to distilling ten-plus specialist teachers into one student, while
+Stanford's own AA203 lecture on imitation learning showed that cloning a fixed teacher dataset accrues
+error **quadratically in trajectory length** and cannot exceed its demonstrator. On-policy distillation
+— label the states the *student* actually visits, not the ones the teacher would have — is structurally
+DAgger, the remedy that lecture prescribed. If it is now standard enough to be a course unit, the
+objection may already be handled in practice. Caveat that hard: the trailer says none of this, does not
+mention DeepSeek, and describes no method. The connection is this document's inference from a topic
+list, and a topic list is not a result. The fourth item, **diffusion LLMs**, has no coverage anywhere
+else in this corpus — no tracked channel has reported one — so there is nothing here to check it
+against.
 
 **The concrete release under it is a harness, not a model, and the architecture is the argument.**
 DeepSeek shipped a coding harness alongside **V4 Pro**, and Fireship's summary of its design is three
@@ -78,9 +101,9 @@ outcome, and none of the abuse required a capable model. The counter-effort is a
 **DeFlock**, an OpenStreetMap-based open dataset that has mapped tens of thousands of camera locations,
 whose author answered Flock's cease-and-desist with "no".
 
-**This run's only new item contains no AI at all, and it is the sharpest illustration in the document of
-the failure mode every agent-security entry here is circling: the wrong implementation getting selected
-silently.** Fireship's post-mortem on the **Coldcard** hardware wallet describes firmware that shipped a
+**The previous run's headline item contained no AI at all, and it remains the sharpest illustration in
+the document of the failure mode every agent-security entry here is circling: the wrong implementation
+getting selected silently.** Fireship's post-mortem on the **Coldcard** hardware wallet describes firmware that shipped a
 custom random-number generator alongside **MicroPython's** basic built-in one. Both exposed **a function
 of the same name**; the crypto library picked between them with an **`if not defined` check**; the vendor
 had "disabled" the weak one by **setting a flag to zero** — which is *defined*, so the check passed and
@@ -298,6 +321,21 @@ does not solve itself. The lecture also supplies the charitable reading, describ
 compressing "an extremely expensive indirect method into a fast neural network" — i.e. a *speed* win,
 which is consistent with the reported 78% generation speedup and inconsistent with a capability jump.
 Nothing in this corpus resolves which one DeepSeek got.
+
+**The same institution has now, accidentally, supplied the missing half of that argument — as a bullet
+point in an advert.** Stanford's CME295 trailer lists **on-policy distillation** among four topics that
+"made a lot of progress in the past year". That term names the standard repair for the exact defect
+AA203 Lecture 15 identified: instead of fitting a fixed corpus of teacher trajectories, you generate
+rollouts from the *student*, and have the teacher supply targets at the states the student actually
+reaches — which is DAgger's construction, the remedy Lecture 15 itself prescribed against covariate
+shift. So the same channel that raised the objection has now signalled the field considers the fix
+routine enough to teach. This is a weak resolution and should be held as one. The trailer contains **no
+technical content whatsoever** — four sentences, zero numbers, no method description, no mention of
+DeepSeek or distillation-into-one-student — and it is promotional material for a paid course. It does
+not tell us that DeepSeek used an on-policy method, and Two Minute Papers' account gives no procedural
+detail either way. What changed is only that the objection is no longer unanswered in principle; it is
+still unanswered in this specific case, and the multi-teacher-disagreement problem in particular gets no
+mention from any source here.
 
 **NVIDIA now argues both sides of its own architecture question.** *Why AI Agents Need More Than One
 Model* (2026-08-04) argues intelligence "isn't one-size-fits-all": a working agent needs a small
@@ -1530,11 +1568,52 @@ partners or recruiting; there is no independent evaluation in any of it.*
 
 ## 📺 Stanford Online
 
-*Channel context: university course material (AA203, Optimal and Learning-Based Control, Spring 2026).
-No sponsorship. These are lectures, not new research — they describe established methods. Note that
-six lectures spanning most of a quarter were published within three days, so publication date does
-not reflect recording date, and lecture numbers are out of order. Auto-transcription mangles proper
-nouns throughout (Hamilton–Jacobi–Isaacs, Bertsekas, ACAS-X); names below are reconstructed.*
+*Channel context: university course material — AA203 (Optimal and Learning-Based Control, Spring 2026)
+and, as of 2026-08-25, promotional material for CME295 (Transformers and Large Language Models). No
+sponsorship, though course trailers are marketing for a paid Stanford offering. The lectures are not
+new research — they describe established methods. Note that six AA203 lectures spanning most of a
+quarter were published within three days, so publication date does not reflect recording date, and
+lecture numbers are out of order. Auto-transcription mangles proper nouns throughout
+(Hamilton–Jacobi–Isaacs, Bertsekas, ACAS-X); names below are reconstructed.*
+
+### Overview: Stanford CME295 Transformers and Large Language Models — 2026-08-25
+
+[Watch](https://www.youtube.com/watch?v=ksRiHHCXfOM)
+
+- **This is a ~30-second course trailer, not a lecture.** The entire spoken content is four sentences
+  from the two instructors (Afshine and Shervine Amidi, who present as "I am Afshine. I'm Shervine"),
+  and it contains no technical explanation, no numbers, no demo and no results. Everything below is
+  the syllabus they name, not material they taught in this video.
+- **What is claimed:** four topics "have made a lot of progress in the past year" and will be covered
+  in the upcoming CME295 offering — **agents**, **harness engineering**, **diffusion LLMs**, and
+  **on-policy distillation**. That list is the only information in the video.
+- **Why a content-free trailer is still worth a row here: it is a curriculum signal, and two of the
+  four items are terms this document has been tracking as vendor framing.** "Harness engineering"
+  appearing as a named unit of a Stanford course is the same claim DeepSeek made commercially when it
+  shipped a pluggable coding harness rather than a model — the argument that the tooling layer around
+  a model is now its own engineering discipline. Nobody in this corpus makes that connection; it is
+  this document's inference, and a syllabus line is not evidence the discipline exists.
+- **The more pointed one is "on-policy distillation", because it names the fix for the exact failure
+  mode AA203 Lecture 15 spent a lecture on.** This document's standing tension is that Two Minute
+  Papers credits DeepSeek 4 Pro's entire gain to distilling ten-plus specialist teachers into one
+  student, while the same channel's own institution taught that behaviour cloning from a fixed
+  teacher dataset suffers covariate shift compounding **quadratically in trajectory length**. On-policy
+  distillation — training the student on states the *student* visits and asking the teacher to label
+  them there — is structurally DAgger, the remedy Lecture 15 gives. So the course listing suggests the
+  field's answer to that objection is already standard practice. The video does not say this, does not
+  mention DeepSeek, and does not describe the method at all.
+- **Diffusion LLMs are the one item in the list this document has no other coverage of** — no tracked
+  channel has reported a diffusion-based language model release, so there is nothing here to
+  corroborate or contradict the claim that it saw "a lot of progress in the past year."
+- **Caveats:** this is **promotional material for a paid Stanford course**, and it should be read as
+  advertising, not analysis — the claim that these four areas progressed is an unsupported assertion
+  by instructors with an enrolment interest. **No sponsorship, affiliate link or comment-for-link
+  funnel appears.** No benchmark, paper, model or date is cited, so there is nothing to reproduce.
+  The framing "have made a lot of progress in the past year" is the instructors' characterisation, not
+  a measured result. Every technical connection drawn above is this document's inference from other
+  entries; **none of it was stated in the video**, and a topic list is not a claim about what works.
+  Note also that the 34,209 views this trailer drew are for a course ad, which says something about
+  demand rather than about the content.
 
 ### AA203 Lecture 15: Imitation Learning — 2026-08-13
 
@@ -1943,6 +2022,7 @@ One row per video ingested. The pipeline appends here and updates the "Videos co
 
 | Date | Channel | Video | Covered |
 |---|---|---|---|
+| 2026-08-25 | Stanford Online | [Overview: Stanford CME295 Transformers and Large Language Models](https://www.youtube.com/watch?v=ksRiHHCXfOM) | 2026-08-26 |
 | 2026-08-20 | Fireship | [DeepSeek is back... and Silicon Valley is terrified](https://www.youtube.com/watch?v=xBByvFrqmWU) | 2026-08-22 |
 | 2026-08-20 | NVIDIA | [Debugging with a Local Agent While You Get Coffee, Powered by NVIDIA RTX Spark](https://www.youtube.com/watch?v=WCRNR1Ve9s0) | 2026-08-21 |
 | 2026-08-19 | Two Minute Papers | [DeepSeek Just Made Closed AI Look Ridiculous](https://www.youtube.com/watch?v=kyYepbhe1g8) | 2026-08-21 |
@@ -1995,6 +2075,17 @@ in range (7 older than the window). **Yannic Kilcher and Andrej Karpathy publish
 30-day window for a fourth consecutive run** — Kilcher's 15 most recent videos and Karpathy's 15 all
 predate it. AI Explained returned a single in-window video, already covered. No fetch failed; the proxy
 preflight succeeded on a rotating credential.
+
+On the **2026-08-26** run, exactly one new transcript was retrieved — the Stanford CME295 course
+trailer — and it is covered above. It is also the thinnest item this document has ingested: four
+sentences of advertising for a paid course, with the topic list as its entire content. Every other
+channel returned only videos already here. Stanford had 15 videos in the 30-day window and NVIDIA 15,
+both capped at the top 5 by views; Fireship had 7 in range (8 older, capped at 5); Two Minute Papers
+had 9 in range (6 older, capped at 5); AI Explained returned a single in-window video, already covered.
+**Yannic Kilcher and Andrej Karpathy published nothing inside the 30-day window for a fifth consecutive
+run**, so this document still has no source that reproduces a result rather than reporting one — worth
+restating on a run whose only new material is a syllabus. No fetch failed; the proxy preflight
+succeeded on a rotating credential.
 
 ---
 

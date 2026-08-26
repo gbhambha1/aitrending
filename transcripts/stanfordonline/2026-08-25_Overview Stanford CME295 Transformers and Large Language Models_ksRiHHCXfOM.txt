@@ -1,0 +1,9 @@
+Title: Overview: Stanford CME295 Transformers and Large Language Models
+Channel: Stanford Online
+Published: 2026-08-25
+URL: https://www.youtube.com/watch?v=ksRiHHCXfOM
+------------------------------------------------------------
+Agents. Harness engineering. Diffusion LLMs. On-policy distillation. These are all topics that
+have made a lot of progress in the past year. And these are all
+topics we will also talk about in the upcoming CME
+295 offering on transformers and large language models. I am Afshine. I'm Shervine. Hope to see you there.
