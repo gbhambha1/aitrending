@@ -238,6 +238,22 @@
       "url": "https://www.youtube.com/watch?v=ksRiHHCXfOM",
       "transcript_file": "transcripts/stanfordonline/2026-08-25_Overview Stanford CME295 Transformers and Large Language Models_ksRiHHCXfOM.txt",
       "status": "ok"
+    },
+    "KL9_1GbmCic": {
+      "title": "Sam Altman :\u2018AGI in 2026\u2019, just as Models Start to [Mis]Train Themselves",
+      "published": "2026-08-27",
+      "channel": "AI Explained",
+      "url": "https://www.youtube.com/watch?v=KL9_1GbmCic",
+      "transcript_file": "transcripts/aiexplained-official/2026-08-27_Sam Altman AGI in 2026 just as Models Start to MisTrain Themselves_KL9_1GbmCic.txt",
+      "status": "ok"
+    },
+    "UuqSy1jPSUw": {
+      "title": "The most expensive software bug in history...",
+      "published": "2026-08-27",
+      "channel": "Fireship",
+      "url": "https://www.youtube.com/watch?v=UuqSy1jPSUw",
+      "transcript_file": "transcripts/fireship/2026-08-27_The most expensive software bug in history_UuqSy1jPSUw.txt",
+      "status": "ok"
     }
   },
   "analyzed": {
@@ -380,6 +396,16 @@
       "analyzed_at": "2026-08-26T13:23:21Z",
       "title": "Overview: Stanford CME295 Transformers and Large Language Models",
       "channel": "Stanford Online"
+    },
+    "KL9_1GbmCic": {
+      "analyzed_at": "2026-08-28T17:07:25Z",
+      "title": "Sam Altman :\u2018AGI in 2026\u2019, just as Models Start to [Mis]Train Themselves",
+      "channel": "AI Explained"
+    },
+    "UuqSy1jPSUw": {
+      "analyzed_at": "2026-08-28T17:07:25Z",
+      "title": "The most expensive software bug in history...",
+      "channel": "Fireship"
     }
   }
 }
