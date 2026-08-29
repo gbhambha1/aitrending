@@ -254,6 +254,30 @@
       "url": "https://www.youtube.com/watch?v=UuqSy1jPSUw",
       "transcript_file": "transcripts/fireship/2026-08-27_The most expensive software bug in history_UuqSy1jPSUw.txt",
       "status": "ok"
+    },
+    "ZlLV9ZHauAM": {
+      "title": "When AI Stops Being a Project: Turning Technology into Real Value for Patients and Providers",
+      "published": "2026-08-28",
+      "channel": "Stanford Online",
+      "url": "https://www.youtube.com/watch?v=ZlLV9ZHauAM",
+      "transcript_file": "transcripts/stanfordonline/2026-08-28_When AI Stops Being a Project Turning Technology into Real Value for Patients an_ZlLV9ZHauAM.txt",
+      "status": "ok"
+    },
+    "LBiNcdGNgrg": {
+      "title": "The Billion Dollar AI Gap Is Collapsing",
+      "published": "2026-08-28",
+      "channel": "Two Minute Papers",
+      "url": "https://www.youtube.com/watch?v=LBiNcdGNgrg",
+      "transcript_file": "transcripts/TwoMinutePapers/2026-08-28_The Billion Dollar AI Gap Is Collapsing_LBiNcdGNgrg.txt",
+      "status": "ok"
+    },
+    "iuZPTE5qsJY": {
+      "title": "The summer Math fell to the machines...",
+      "published": "2026-08-19",
+      "channel": "Fireship",
+      "url": "https://www.youtube.com/watch?v=iuZPTE5qsJY",
+      "transcript_file": "transcripts/fireship/2026-08-19_The summer Math fell to the machines_iuZPTE5qsJY.txt",
+      "status": "ok"
     }
   },
   "analyzed": {
@@ -406,6 +430,21 @@
       "analyzed_at": "2026-08-28T17:07:25Z",
       "title": "The most expensive software bug in history...",
       "channel": "Fireship"
+    },
+    "iuZPTE5qsJY": {
+      "analyzed_at": "2026-08-29T13:09:48Z",
+      "title": "The summer Math fell to the machines...",
+      "channel": "Fireship"
+    },
+    "ZlLV9ZHauAM": {
+      "analyzed_at": "2026-08-29T13:09:48Z",
+      "title": "When AI Stops Being a Project: Turning Technology into Real Value for Patients and Providers",
+      "channel": "Stanford Online"
+    },
+    "LBiNcdGNgrg": {
+      "analyzed_at": "2026-08-29T13:09:48Z",
+      "title": "The Billion Dollar AI Gap Is Collapsing",
+      "channel": "Two Minute Papers"
     }
   }
 }
